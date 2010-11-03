@@ -1,0 +1,4 @@
+# This is a comment. Only full-line comments are supported
+# Configuration values are specified as "key=value" (note: no white space around '='), one per line.
+repository=/var/43f
+notify=user1@domain.tld user2@domain.tld

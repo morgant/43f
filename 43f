@@ -1,0 +1,208 @@
+#!/bin/bash
+
+# 
+# 43f - 
+# 
+# v0.1   - 2009-03-07 - Morgan Aldridge <morgant@makkintosshu.com>
+#                       Initial development.
+# 
+
+VERSION='0.1'
+VERBOSE=false
+CONFIG_FILE='/usr/local/etc/43f.conf'
+CONFIG_REPOSITORY='/usr/local/var/db/43f'
+CONFIG_TEST=false
+NOTIFY_EMAIL='root'
+
+Y=`date "+%Y"`
+M=`date "+%m"`
+D=`date "+%d"`
+
+function usage() {
+	printf "Usage: 43f [-h|-t|-V] [-v] [-f file] \n"
+	printf "\nOptions:\n"
+	printf "  -v            : verbose output\n"
+	printf "  -V, --version : print the version number and exit\n"
+	printf "  -h, --help    : print these usage instructions and exit\n"
+	printf "  -f            : specify an alternate config file\n"
+	printf "         DEFAULT: /usr/local/etc/43f.conf\n"
+	printf "  -t            : check the config file and exit\n"
+	printf "\nConfig File Options:\n"
+	printf "  repository    : absolute path to archive repository\n"
+	printf "  notify        : email address to send notifications to\n"
+}
+
+function load_config() {
+	local SUCCESS
+	local VAR
+	local VAL
+	SUCCESS=0
+	IFS==
+	while read VAR VAL; do
+		case "$VAR" in
+			\#*)
+				# do nothing - this would be a comment
+				;;
+			repository)
+				if [ -n "$VAL" -a -d "$VAL" ]; then
+					CONFIG_REPOSITORY="$VAL"
+					if $VERBOSE ; then
+						printf "'%s' set to '%s'.\n" "$VAR" "$CONFIG_REPOSITORY"
+					fi
+				else
+					printf "Error: '%s' value in config file is either invalid or not a directory!\n" "$VAR"
+					SUCCESS=1
+				fi
+				;;
+			notify)
+				if echo "$VAL" | grep -q -i -E '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$' ; then
+					NOTIFY_EMAIL="$VAL"
+					if $VERBOSE ; then
+						printf "'%s' set to '%s'.\n" "$VAR" "$NOTIFY_EMAIL"
+					fi
+				else
+					printf "Error: '%s' value in config file is not a valid email address!\n" "$VAR"
+					SUCCESS=1
+				fi
+				;;
+			*)
+				printf "Warning: Ignored unknown configuration variable '%s'.\n" "$VAR"
+				;;
+		esac
+	done < "$1"
+	return $SUCCESS
+}
+
+function create_repository() {
+	local SUCCESS
+	SUCCESS=0
+	
+	# does the repository exist?
+	if $VERBOSE ; then
+		printf "Repository directory '%s' " "$CONFIG_REPOSITORY"
+	fi
+	if [ -d "$CONFIG_REPOSITORY" ] ; then
+		if $VERBOSE ; then
+			printf "exists.\n"
+		fi
+	else
+		if $VERBOSE ; then
+			printf "does not exist. Creating... "
+		fi
+		if mkdir -p $CONFIG_REPOSITORY ; then
+			if $VERBOSE ; then
+				printf "Done.\n"
+			fi
+		else
+			if $VERBOSE ; then
+				printf "Error!\n"
+			fi
+			SUCCESS=1
+		fi
+	fi
+	
+	# create the necessary sub directories
+	if [ $SUCCESS -eq 0 ] ; then
+		local CURRENT_DIR
+		# check for current year directory
+		CURRENT_DIR="$CONFIG_REPOSITORY/$Y"
+		if $VERBOSE ; then
+			printf "Year Directory '%s' " "$CURRENT_DIR"
+		fi
+		if [ -d "$CURRENT_DIR" ] ; then
+			if $VERBOSE ; then
+				printf "exists.\n"
+			fi
+		else
+			if $VERBOSE; then
+				printf "does not exist. Creating... "
+			fi
+			if mkdir $CURRENT_DIR ; then
+				if $VERBOSE ; then
+					printf "Done.\n"
+				fi
+			else
+				if $VERBOSE ; then
+					printf "ERROR!\n"
+				fi
+				SUCCESS=1
+			fi
+		fi
+	fi
+	
+	return $SUCCESS
+}
+
+if [ $# -gt 0 ]; then
+	until [ $# -eq 0 ]; do
+		case "$1" in
+			-h|--help)
+				usage
+				exit
+				;;
+			-v)
+				VERBOSE=true
+				if $VERBOSE ; then
+					printf "Enabling verbose mode.\n"
+				fi
+				;;
+			-V|--version)
+				printf "43f v%s\n" $VERSION
+				exit
+				;;
+			-f)
+				if [ -n $2 -a -e $2 ]; then
+					CONFIG_FILE="$2"
+					if $VERBOSE ; then
+						printf "Using config file '%s'.\n" $CONFIG_FILE
+					fi
+				else
+					printf "Error: config file '%s' does not exist!\nExiting.\n" "$2"
+					exit 1
+				fi
+				shift
+				;;
+			-t)
+				CONFIG_TEST=true
+				;;
+			*)
+				
+				;;
+		esac
+		shift
+	done
+	
+	# load the config file
+	if load_config "$CONFIG_FILE"; then
+		if $VERBOSE ; then
+			printf "Config file loaded successfully.\n"
+		fi
+		if $CONFIG_TEST ; then
+			if $VERBOSE ; then
+				printf "Exiting.\n"
+			fi
+			exit
+		fi
+	else
+		printf "Error: an error occurred while loading the config file '%s'!\nExiting.\n" $CONFIG_FILE
+		exit 1
+	fi
+	
+	# check/create repository directories
+	if create_repository ; then
+		if $VERBOSE ; then
+			printf "Repository directories found/created successfully.\n"
+		fi
+	else
+		if $VERBOSE ; then
+			printf "Error: an error occurred while checking or creating the repository directories in '%s'!\nExiting.\n" "$CONFIG_REPOSITORY"
+			exit 1
+		fi
+	fi
+	
+	
+	
+else
+	usage
+	exit 1
+fi
