@@ -12,6 +12,7 @@ verbose=false
 config_file='/usr/local/etc/43f.conf'
 config_repository='/usr/local/var/db/43f'
 config_test=false
+command=''
 notify_email='root'
 
 y=`date "+%Y"`
@@ -19,14 +20,16 @@ m=`date "+%m"`
 d=`date "+%d"`
 
 function usage() {
-	printf "Usage: 43f [-h|-t|-V] [-v] [-f file] \n"
+	printf "Usage: 43f [-h|-t|-V] [-v] [-c file] COMMAND \n"
 	printf "\nOptions:\n"
 	printf "  -v            : verbose output\n"
 	printf "  -V, --version : print the version number and exit\n"
 	printf "  -h, --help    : print these usage instructions and exit\n"
-	printf "  -f            : specify an alternate config file\n"
+	printf "  -c            : specify an alternate config file\n"
 	printf "         DEFAULT: /usr/local/etc/43f.conf\n"
 	printf "  -t            : check the config file and exit\n"
+	printf "\nCommands:\n"
+	printf "  init          : initialize repository\n"
 	printf "\nConfig File Options:\n"
 	printf "  repository    : absolute path to archive repository\n"
 	printf "  notify        : email address to send notifications to\n"
@@ -50,7 +53,7 @@ function load_config() {
 						printf "'%s' set to '%s'.\n" "$var" "$config_repository"
 					fi
 				else
-					printf "Error: '%s' value in config file is either invalid or not a directory!\n" "$var"
+					printf "ERROR! '%s' value in config file is either invalid or not a directory! You may need to run '43f init' to initialize the repository.\n" "$var"
 					success=false
 				fi
 				;;
@@ -61,7 +64,7 @@ function load_config() {
 						printf "'%s' set to '%s'.\n" "$var" "$notify_email"
 					fi
 				else
-					printf "Error: '%s' value in config file is not a valid email address!\n" "$var"
+					printf "ERROR! '%s' value in config file is not a valid email address!\n" "$var"
 					success=false
 				fi
 				;;
@@ -73,7 +76,7 @@ function load_config() {
 	if $success; then return 0; else return 1; fi
 }
 
-function create_repository() {
+function init_repository() {
 	local success
 	success=true
 	
@@ -150,20 +153,24 @@ if [ $# -gt 0 ]; then
 				printf "43f v%s\n" $version
 				exit
 				;;
-			-f)
+			-c)
 				if [ -n $2 -a -e $2 ]; then
 					config_file="$2"
 					if $verbose ; then
 						printf "Using config file '%s'.\n" $config_file
 					fi
 				else
-					printf "Error: config file '%s' does not exist!\nExiting.\n" "$2"
+					printf "ERROR! Config file '%s' does not exist!\nExiting.\n" "$2"
 					exit 1
 				fi
 				shift
 				;;
 			-t)
 				config_test=true
+				;;
+			init)
+				command="$1"
+				shift
 				;;
 			*)
 				
@@ -184,18 +191,18 @@ if [ $# -gt 0 ]; then
 			exit
 		fi
 	else
-		printf "Error: an error occurred while loading the config file '%s'!\nExiting.\n" $config_file
+		printf "ERROR! An error occurred while loading the config file '%s'!\nExiting.\n" $config_file
 		exit 1
 	fi
 	
 	# check/create repository directories
-	if create_repository ; then
+	if init_repository ; then
 		if $verbose ; then
 			printf "Repository directories found/created successfully.\n"
 		fi
 	else
 		if $verbose ; then
-			printf "Error: an error occurred while checking or creating the repository directories in '%s'!\nExiting.\n" "$config_repository"
+			printf "ERROR! An error occurred while checking or creating the repository directories in '%s'!\nExiting.\n" "$config_repository"
 			exit 1
 		fi
 	fi
