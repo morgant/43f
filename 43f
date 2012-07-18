@@ -1,7 +1,13 @@
 #!/bin/bash
 
 # 
-# 43f - 
+# 43f - A simple time-based storage management utility based on the forty-three 
+#        folders concept from David Allen's "Getting Things Done" program. It
+#        maintains a 43 folders per year (one for every month [12] and one for 
+#        every possible date in a month [31], therefore allowing you to store 
+#        up to 31 daily file sets, 12 monthly file sets, and as many annual 
+#        file sets as you would like. It is ideal for managing backup/snapshot
+#        sets, but should be flexible enough for any number of uses.
 # 
 # v0.1   - 2009-03-07 - Morgan Aldridge <morgant@makkintosshu.com>
 #                       Initial development.
