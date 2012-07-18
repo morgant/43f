@@ -73,7 +73,8 @@ function load_config() {
 				;;
 		esac
 	done < "$1"
-	if $success; then return 0; else return 1; fi
+	
+	$success
 }
 
 function init_repository() {
@@ -104,15 +105,13 @@ function init_repository() {
 		fi
 	fi
 	
-	# create the necessary sub directories
-	if [ $success -eq 0 ] ; then
-		local current_dir
-		# check for current year directory
-		current_dir="$config_repository/$y"
+	# check for year subdirectory & create if necessary
+	if $success; then
+		year_dir="$config_repository/$y"
 		if $verbose ; then
-			printf "Year Directory '%s' " "$current_dir"
+			printf "Year Directory '%s' " "$year_dir"
 		fi
-		if [ -d "$current_dir" ] ; then
+		if [ -d "$year_dir" ] ; then
 			if $verbose ; then
 				printf "exists.\n"
 			fi
@@ -120,7 +119,7 @@ function init_repository() {
 			if $verbose; then
 				printf "does not exist. Creating... "
 			fi
-			if mkdir $current_dir ; then
+			if mkdir $year_dir ; then
 				if $verbose ; then
 					printf "Done.\n"
 				fi
@@ -133,7 +132,53 @@ function init_repository() {
 		fi
 	fi
 	
-	if $success; then return 0; else return 1; fi
+	# step through the month directories, checking for them & creating as necessary
+	if $success; then
+		local month
+		for (( month=1; month<=12; month++ )); do
+			local month_dir
+			# check for month directory
+			printf -v month_dir "%s/%s/m%02d" "$config_repository" "$y" "$month"
+			if $verbose; then echo -n "Month Directory ${month_dir} "; fi
+			if [ -d "$month_dir" ]; then
+				if $verbose; then echo "exists."; fi
+			else
+				# create the month directory
+				if $verbose; then echo -n "does not exist. Creating... "; fi
+				if mkdir $month_dir; then
+					if $verbose; then echo "Done."; fi
+				else
+					if $verbose; then echo "ERROR!"; fi
+					success=false
+				fi
+			fi
+		done
+	fi
+	
+	# step through the day directories, checking for them & creating as necessary
+	if $success; then
+		local day
+		for (( day=1; day<=31; day++ )); do
+		      local day_dir
+		      # check for the day directory
+		      printf -v day_dir "%s/%s/d%02d" "$config_repository" "$y" "$day"
+		      if $verbose; then echo -n "Day Directory ${day_dir} "; fi
+		      if [ -d "$day_dir" ]; then
+		      	if $verbose; then echo "exists."; fi
+		      else
+		      	# create the day directory
+		      	if $verbose; then echo -n "does not exist. Creating... "; fi
+		      	if mkdir $day_dir; then
+		      		if $verbose; then echo "Done."; fi	
+		      	else
+		      		if $verbose; then echo "ERROR!"; fi
+		      		success=false
+		      	fi
+		      fi
+		done
+	fi
+	
+	$success
 }
 
 if [ $# -gt 0 ]; then
