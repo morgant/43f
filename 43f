@@ -59,19 +59,19 @@ function usage() {
 	echo "Usage: $tool [-h|-t|-V] [-v] [-c file] COMMAND"
 	echo
 	echo 'Options:'
-	echo '  -v            : verbose output'
-	echo '  -V, --version : print the version number and exit'
-	echo '  -h, --help    : print these usage instructions and exit'
-	echo '  -c            : specify an alternate config file'
-	echo '         DEFAULT: /usr/local/etc/43f.conf'
-	echo '  -t            : check the config file and exit'
+	echo '  -v                : verbose output'
+	echo '  -V, --version     : print the version number and exit'
+	echo '  -h, --help        : print these usage instructions and exit'
+	echo '  -c, --config=file : specify an alternate config file'
+	echo '             DEFAULT: /usr/local/etc/43f.conf'
+	echo '  -t                : check the config file and exit'
 	echo
 	echo 'Commands:'
-	echo '  init          : initialize repository'
+	echo '  init <path>       : initialize specified repository'
 	echo
 	echo 'Config File Options:'
-	echo '  repository    : absolute path to archive repository'
-	echo '  notify        : email address(es) to send notifications to'
+	echo '  repository        : absolute path to archive repository'
+	echo '  notify            : email address(es) to send notifications to'
 }
 
 # print version info
@@ -134,35 +134,32 @@ function load_config() {
 # initialize the repository
 function init_repository() {
 	local success
+	local repo
 	success=true
+	repo="$1"
 	
 	# does the repository exist?
-	if $verbose ; then
-		printf "Repository directory '%s' " "$config_repository"
-	fi
-	if [ -d "$config_repository" ] ; then
-		if $verbose ; then
-			printf "exists.\n"
-		fi
+	if [ -z "$repo" ]; then
+		echo 'ERROR! Cannot initialize repository with empty path!'
+		success=false
 	else
-		if $verbose ; then
-			printf "does not exist. Creating... "
-		fi
-		if mkdir -p $config_repository ; then
-			if $verbose ; then
-				printf "Done.\n"
-			fi
+		if $verbose; then echo -n "Repository directory '$repo' "; fi
+		if [ -d "$repo" ] ; then
+			if $verbose; then echo 'exists.'; fi
 		else
-			if $verbose ; then
-				printf "Error!\n"
+			if $verbose ; then echo -n 'does not exist. Creating... '; fi
+			if mkdir -p $repo; then
+				if $verbose; then echo 'Done.'; fi
+			else
+				if $verbose; then echo 'Error!'; fi
+				success=false
 			fi
-			success=false
 		fi
 	fi
-	
+		
 	# check for year subdirectory & create if necessary
 	if $success; then
-		year_dir="$config_repository/$y"
+		year_dir="$repo/$y"
 		if $verbose ; then
 			printf "Year Directory '%s' " "$year_dir"
 		fi
@@ -193,7 +190,7 @@ function init_repository() {
 		for (( month=1; month<=12; month++ )); do
 			local month_dir
 			# check for month directory
-			printf -v month_dir "%s/%s/m%02d" "$config_repository" "$y" "$month"
+			printf -v month_dir "%s/%s/m%02d" "$repo" "$y" "$month"
 			if $verbose; then echo -n "Month Directory ${month_dir} "; fi
 			if [ -d "$month_dir" ]; then
 				if $verbose; then echo "exists."; fi
@@ -216,7 +213,7 @@ function init_repository() {
 		for (( day=1; day<=31; day++ )); do
 		      local day_dir
 		      # check for the day directory
-		      printf -v day_dir "%s/%s/d%02d" "$config_repository" "$y" "$day"
+		      printf -v day_dir "%s/%s/d%02d" "$repo" "$y" "$day"
 		      if $verbose; then echo -n "Day Directory ${day_dir} "; fi
 		      if [ -d "$day_dir" ]; then
 		      	if $verbose; then echo "exists."; fi
@@ -297,7 +294,7 @@ if [ $# -gt 0 ]; then
 					exit
 					;;
 				# see if the user is specifying a config file
-				"-c")
+				"-c" | "--config")
 					# the next argument should be the config file
 					((i++))
 					config_file="${argv[$i]}"
@@ -337,8 +334,10 @@ if [ $# -gt 0 ]; then
 			# one would normally handle arguments here
 			case "${argv[$i]}" in
 				init)
+					((i++))
+					repository_dir="${argv[$i]}"
 					# check/create repository directories
-					if init_repository ; then
+					if init_repository "$repository_dir"; then
 					      if $verbose; then echo 'Repository directories found/created successfully.'; fi
 					else
 					      echo "ERROR! An error occurred while checking or creating the repository directories in '${config_repository}'!"
