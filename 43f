@@ -9,80 +9,129 @@
 #        file sets as you would like. It is ideal for managing backup/snapshot
 #        sets, but should be flexible enough for any number of uses.
 # 
+# CHANGE LOG:
+# 
 # v0.1   - 2009-03-07 - Morgan Aldridge <morgant@makkintosshu.com>
 #                       Initial development.
 # 
+# LICENSE:
+# 
+# Copyright (c) 2012, Morgan Aldridge. All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without 
+# modification, are permitted provided that the following conditions are met:
+# 
+# - Redistributions of source code must retain the above copyright notice, this 
+#   list of conditions and the following disclaimer.
+# - Redistributions in binary form must reproduce the above copyright notice, 
+#   this list of conditions and the following disclaimer in the documentation 
+#   and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE 
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
 
+# info
+tool=$(basename "$0")
 version='0.1'
+copyright='Copyright (c) 2009-2012 Morgan Aldridge'
+
+# global variables
 verbose=false
 config_file='/usr/local/etc/43f.conf'
 config_repository='/usr/local/var/db/43f'
-config_test=false
-command=''
 notify_email='root'
 
 y=`date "+%Y"`
 m=`date "+%m"`
 d=`date "+%d"`
 
+# print usage instructions (help)
 function usage() {
-	printf "Usage: 43f [-h|-t|-V] [-v] [-c file] COMMAND \n"
-	printf "\nOptions:\n"
-	printf "  -v            : verbose output\n"
-	printf "  -V, --version : print the version number and exit\n"
-	printf "  -h, --help    : print these usage instructions and exit\n"
-	printf "  -c            : specify an alternate config file\n"
-	printf "         DEFAULT: /usr/local/etc/43f.conf\n"
-	printf "  -t            : check the config file and exit\n"
-	printf "\nCommands:\n"
-	printf "  init          : initialize repository\n"
-	printf "\nConfig File Options:\n"
-	printf "  repository    : absolute path to archive repository\n"
-	printf "  notify        : email address to send notifications to\n"
+	echo "Usage: $tool [-h|-t|-V] [-v] [-c file] COMMAND"
+	echo
+	echo 'Options:'
+	echo '  -v            : verbose output'
+	echo '  -V, --version : print the version number and exit'
+	echo '  -h, --help    : print these usage instructions and exit'
+	echo '  -c            : specify an alternate config file'
+	echo '         DEFAULT: /usr/local/etc/43f.conf'
+	echo '  -t            : check the config file and exit'
+	echo
+	echo 'Commands:'
+	echo '  init          : initialize repository'
+	echo
+	echo 'Config File Options:'
+	echo '  repository    : absolute path to archive repository'
+	echo '  notify        : email address(es) to send notifications to'
 }
 
+# print version info
+function version() {
+	echo "$tool v$version $copyright"
+}
+
+# load the config file
 function load_config() {
 	local success
 	local var
 	local val
+	local config_file
 	success=true
-	IFS==
-	while read var val; do
-		case "$var" in
-			\#*)
-				# do nothing - this would be a comment
-				;;
-			repository)
-				if [ -n "$val" -a -d "$val" ]; then
-					config_repository="$val"
-					if $verbose ; then
-						printf "'%s' set to '%s'.\n" "$var" "$config_repository"
+	config_file="$1"
+	# does the config file exist?
+	if [ -n "$config_file" -a -e "$config_file" ]; then
+		if $verbose; then echo "Loading config file '${config_file}'."; fi
+		IFS==
+		while read var val; do
+			case "$var" in
+				\#*)
+					# do nothing - this would be a comment
+					;;
+				repository)
+					if [ -n "$val" -a -d "$val" ]; then
+						config_repository="$val"
+						if $verbose ; then
+							printf "'%s' set to '%s'.\n" "$var" "$config_repository"
+						fi
+					else
+						printf "ERROR! '%s' value in config file is either invalid or not a directory! You may need to run '43f init' to initialize the repository.\n" "$var"
+						success=false
 					fi
-				else
-					printf "ERROR! '%s' value in config file is either invalid or not a directory! You may need to run '43f init' to initialize the repository.\n" "$var"
-					success=false
-				fi
-				;;
-			notify)
-				if echo "$val" | grep -q -i -E '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$' ; then
-					notify_email="$val"
-					if $verbose ; then
-						printf "'%s' set to '%s'.\n" "$var" "$notify_email"
+					;;
+				notify)
+					if echo "$val" | grep -q -i -E '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$' ; then
+						notify_email="$val"
+						if $verbose ; then
+							printf "'%s' set to '%s'.\n" "$var" "$notify_email"
+						fi
+					else
+						printf "ERROR! '%s' value in config file is not a valid email address!\n" "$var"
+						success=false
 					fi
-				else
-					printf "ERROR! '%s' value in config file is not a valid email address!\n" "$var"
-					success=false
-				fi
-				;;
-			*)
-				printf "Warning: Ignored unknown configuration variable '%s'.\n" "$var"
-				;;
-		esac
-	done < "$1"
-	
+					;;
+				*)
+					printf "Warning: Ignored unknown configuration variable '%s'.\n" "$var"
+					;;
+			esac
+		done < "$config_file"
+	else
+		if $verbose; then echo "ERROR! Config file '${config_file}' does not exist!"; fi
+		success=false
+	fi
+		
 	$success
 }
 
+# initialize the repository
 function init_repository() {
 	local success
 	success=true
@@ -187,80 +236,125 @@ function init_repository() {
 	$success
 }
 
+# see if any arguments were passed in
 if [ $# -gt 0 ]; then
-	until [ $# -eq 0 ]; do
-		case "$1" in
-			-h|--help)
-				usage
-				exit
-				;;
-			-v)
-				verbose=true
-				if $verbose ; then
-					printf "Enabling verbose mode.\n"
-				fi
-				;;
-			-V|--version)
-				printf "43f v%s\n" $version
-				exit
-				;;
-			-c)
-				if [ -n $2 -a -e $2 ]; then
-					config_file="$2"
-					if $verbose ; then
-						printf "Using config file '%s'.\n" $config_file
-					fi
-				else
-					printf "ERROR! Config file '%s' does not exist!\nExiting.\n" "$2"
-					exit 1
-				fi
-				shift
-				;;
-			-t)
-				config_test=true
-				;;
-			init)
-				command="$1"
-				shift
-				;;
-			*)
+	# if so, step through them all and pre-process them (we do this so we can 
+	# support multiple options specified together, e.g.: -abc vs. -a -b -c),
+	# GNU-style long options with alternate style values, and for easier
+	# actual handling
+	argv=()
+	while [ $# -gt 0 ]; do
+		# is this an option (e.g. starts with a dash) or an argument?
+		if [ "${1:0:1}" = "-" ]; then
+			# is it a GNU-style long option (e.g. starts with a double-dash)?
+			if [ "${1:0:2}" = "--" ]; then
+				# push the option (everything before an equals) onto argv
+				argv=("${argv[@]}" "${1%%=*}")
 				
-				;;
-		esac
-		shift
-	done
-	
-	# load the config file
-	if load_config "$config_file"; then
-		if $verbose ; then
-			printf "Config file loaded successfully.\n"
-		fi
-		if $config_test ; then
-			if $verbose ; then
-				printf "Exiting.\n"
+				# is it the alternate "--long-opt=value" format? if so, make it
+				# "--long-opt value" format buy pushing the value (everything after the
+				# equals) on as a separate argument
+				case "$1" in *=*)
+					argv=("${argv[@]}" "${1##*=}") ;;
+				esac
+			# otherwise, is it multiple single options specified together?
+			elif [ ${#1} -gt 2 ]; then
+				tmp="$1"
+				# push each onto argv as single options
+				for (( i=1; i < ${#tmp}; i++ )); do
+					argv=("${argv[@]}" "-${tmp:$i:1}")
+				done
+			# otherwise, it must be a single option so just push it onto argv
+			else
+				argv=("${argv[@]}" "$1")
 			fi
-			exit
+			shift
+		# arguments just get pushed onto argv in order too
+		else
+			argv=("${argv[@]}" "$1")
+			shift
 		fi
-	else
-		printf "ERROR! An error occurred while loading the config file '%s'!\nExiting.\n" $config_file
-		exit 1
-	fi
-	
-	# check/create repository directories
-	if init_repository ; then
-		if $verbose ; then
-			printf "Repository directories found/created successfully.\n"
+	done
+	argc=${#argv[@]}
+		
+	# now that we've pre-processed the options, go through them all for real
+	for (( i=0; i<$argc; i++ )); do
+		# is this an option (e.g. starts with a dash) or an argument?
+		if [ "${argv[$i]:0:1}" = "-" ]; then
+			case "${argv[$i]}" in
+				# see if the user intended us to run in verbose mode
+				"-v" | "--verbose")
+					verbose=true
+					;;
+				# see if the user requested help
+				"-h" | "--help")
+					usage
+					exit
+					;;
+				# see if the user requested the version
+				"-V" | "--version")
+					version
+					exit
+					;;
+				# see if the user is specifying a config file
+				"-c")
+					# the next argument should be the config file
+					((i++))
+					config_file="${argv[$i]}"
+					
+					# does the config file exist?
+					if [ -n "$config_file" -a -e "$config_file" ]; then
+						if $verbose; then echo "Using config file '${config_file}'."; fi
+					else
+						echo "ERROR! Config file '${config_file}' does not exist!"
+						echo 'Exiting.'
+						exit 1
+					fi
+					;;
+				# see if the user is requesting we test the config file
+				"-t")
+					# load the config file
+					if load_config "$config_file"; then
+						echo "Config file '${config_file}' loaded & tested successfully."
+						echo 'Exiting.'
+						exit
+					else
+						echo "ERROR! An error occurred while loading the config file '${config_file}'!"
+						echo 'Exiting.'
+						exit 1
+					fi
+					;;
+				# handle other options
+					
+				# unknown option
+				*)
+					echo "$tool: Unknown option '$1'!"
+					exit 1
+					;;
+			esac
+		# handle arguments
+		else
+			# one would normally handle arguments here
+			case "${argv[$i]}" in
+				init)
+					# check/create repository directories
+					if init_repository ; then
+					      if $verbose; then echo 'Repository directories found/created successfully.'; fi
+					else
+					      echo "ERROR! An error occurred while checking or creating the repository directories in '${config_repository}'!"
+					      echo 'Exiting.'
+					      exit 1
+					fi
+					;;
+				*)
+					echo "$tool: Unknown command '${argv[$i]}'!"
+					exit 1
+					;;
+			esac
 		fi
-	else
-		if $verbose ; then
-			printf "ERROR! An error occurred while checking or creating the repository directories in '%s'!\nExiting.\n" "$config_repository"
-			exit 1
-		fi
-	fi
-	
-	
-	
+	done
 else
+	echo "No options or arguments were specified!"$'\n'
 	usage
 	exit 1
 fi
