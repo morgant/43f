@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # 
-# 43f - A simple time-based storage management utility based on the forty-three 
+# 43f - A simple date-based storage management utility based on the forty-three 
 #        folders concept from David Allen's "Getting Things Done" program. It
-#        maintains a 43 folders per year (one for every month [12] and one for 
+#        maintains 43 folders per year (one for every month [12] and one for 
 #        every possible date in a month [31], therefore allowing you to store 
 #        up to 31 daily file sets, 12 monthly file sets, and as many annual 
 #        file sets as you would like. It is ideal for managing backup/snapshot
@@ -68,6 +68,7 @@ function usage() {
 	echo
 	echo 'Commands:'
 	echo '  init <path>       : initialize specified repository'
+	echo '  run               : perform storage management'
 	echo
 	echo 'Config File Options:'
 	echo '  repository        : absolute path to archive repository'
@@ -131,6 +132,20 @@ function load_config() {
 	$success
 }
 
+# determine whether repository exists
+function does_repository_exist() {
+	local success
+	local repo
+	success=true
+	repo="$1"
+	
+	if [ -z "$repo" -o ! -d "$repo" ]; then
+		success=false
+	fi
+	
+	$success
+}
+
 # initialize the repository
 function init_repository() {
 	local success
@@ -144,7 +159,7 @@ function init_repository() {
 		success=false
 	else
 		if $verbose; then echo -n "Repository directory '$repo' "; fi
-		if [ -d "$repo" ] ; then
+		if does_repository_exist "$repo"; then
 			if $verbose; then echo 'exists.'; fi
 		else
 			if $verbose ; then echo -n 'does not exist. Creating... '; fi
@@ -228,6 +243,63 @@ function init_repository() {
 		      	fi
 		      fi
 		done
+	fi
+	
+	$success
+}
+
+function init_repository_symlinks() {
+	local success
+	local repo
+	success=true
+	repo="$1"
+	
+	if does_repository_exist "$repo"; then
+		# create symlink for 'today'
+		local today_dir
+		local today
+		today=$(date +%d)
+		today_dir="$repo/$y/d${today}"
+		if $verbose; then echo -n "Creating symlink for 'today' pointing to '$today_dir'... "; fi
+		if ln -f -s "$today_dir" "$repo/today"; then
+			if $verbose; then echo 'Done.'; fi
+		else
+			if $verbose; then echo 'ERROR!'; fi
+			success=false
+		fi
+		
+		# create symlink for 'yesterday'
+		local yesterday_dir
+		local yesterday
+		yesterday=$(date -v-1d +%d)
+		yesterday_dir="$repo/$y/d${yesterday}"
+		if $verbose; then echo -n "Creating symlink for 'yesterday' pointing to '$yesterday_dir'... "; fi
+		if ln -f -s "$yesterday_dir" "$repo/yesterday"; then
+			if $verbose; then echo 'Done.'; fi
+		else
+			if $verbose; then echo 'ERROR!'; fi
+			success=false
+		fi
+		
+		# create symlink for 'sunday' through 'saturday' for the past week (not including today)
+		local weekday_dir
+		local weekday_name
+		local weekday
+		for (( i=1; i<=7; i++ )); do
+			weekday=$(date -v-${i}d +%d)
+			weekday_dir="$repo/$y/d${weekday}"
+			weekday_name=$(date -v-${i}d +%A | tr '[:upper:]' '[:lower:]')
+			if $verbose; then echo -n "Creating symlink for '$weekday_name' pointing to '$weekday_dir'... "; fi
+			if ln -f -s "$weekday_dir" "$repo/$weekday_name"; then
+				if $verbose; then echo 'Done.'; fi
+			else
+				if $verbose; then echo 'ERROR!'; fi
+				success=false
+			fi
+		done
+	else
+		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
+		success=false
 	fi
 	
 	$success
@@ -333,6 +405,7 @@ if [ $# -gt 0 ]; then
 		else
 			# one would normally handle arguments here
 			case "${argv[$i]}" in
+				# see if the user specified we initialize a repository
 				init)
 					((i++))
 					repository_dir="${argv[$i]}"
@@ -343,6 +416,24 @@ if [ $# -gt 0 ]; then
 					      echo "ERROR! An error occurred while checking or creating the repository directories in '${config_repository}'!"
 					      echo 'Exiting.'
 					      exit 1
+					fi
+					;;
+				# see if the user specified we run storage management process
+				run)
+					# load the config file
+					if load_config "$config_file"; then
+						if $verbose; then echo -n "Updating convenience symlinks in repository '${config_repository}'... "; fi
+						if init_repository_symlinks "$config_repository"; then
+							if $verbose; then echo 'Done.'; fi
+						else
+							if $verbose; then echo 'ERROR!'; fi
+							echo 'WARNING: An error occurred while creating/updating convenience symlinks. Proceeding, but something may be wrong!'
+						fi
+						#roll_repository_directories
+					else
+						echo "ERROR! An error occurred while loading the config file '${config_file}'!"
+						echo 'Exiting.'
+						exit 1
 					fi
 					;;
 				*)
