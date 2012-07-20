@@ -2,3 +2,6 @@
 # Configuration values are specified as "key=value" (note: no white space around '='), one per line.
 repository=/var/43f
 notify=user1@domain.tld user2@domain.tld
+days=31
+months=12
+years=7

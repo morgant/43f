@@ -48,7 +48,10 @@ copyright='Copyright (c) 2009-2012 Morgan Aldridge'
 verbose=false
 config_file='/usr/local/etc/43f.conf'
 config_repository='/usr/local/var/db/43f'
-notify_email='root'
+config_notify_email='root'
+config_keep_days=31
+config_keep_months=12
+config_keep_years=10
 
 y=`date "+%Y"`
 m=`date "+%m"`
@@ -72,7 +75,15 @@ function usage() {
 	echo
 	echo 'Config File Options:'
 	echo '  repository        : absolute path to archive repository'
+	echo '             DEFAULT: /usr/local/var/db/43f'
 	echo '  notify            : email address(es) to send notifications to'
+	echo '             DEFAULT: root'
+	echo '  days              : number of daily file sets to preserve (1-31)'
+	echo '             DEFAULT: 31'
+	echo '  months            : number of monthly file sets to preserve (1-12)'
+	echo '             DEFAULT: 12'
+	echo '  years             : number of annual file sets to preserve (1+)'
+	echo '             DEFAULT: 10'
 }
 
 # print version info
@@ -110,12 +121,39 @@ function load_config() {
 					;;
 				notify)
 					if echo "$val" | grep -q -i -E '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$' ; then
-						notify_email="$val"
+						config_notify_email="$val"
 						if $verbose ; then
-							printf "'%s' set to '%s'.\n" "$var" "$notify_email"
+							printf "'%s' set to '%s'.\n" "$var" "$config_notify_email"
 						fi
 					else
 						printf "ERROR! '%s' value in config file is not a valid email address!\n" "$var"
+						success=false
+					fi
+					;;
+				days)
+					if (( ( "$val" >= 1 ) && ( "$val" <= 31 ) )); then
+						config_keep_days="$val"
+						if $verbose; then echo "'$var' set to '$config_keep_days'."; fi
+					else
+						echo "ERROR! '$var' value in config file is out of range (1-31)!"
+						success=false
+					fi
+					;;
+				months)
+					if (( ( "$val" >= 1 ) && ( "$val" <= 12 ) )); then
+						config_keep_months="$val"
+						if $verbose; then echo "'$var' set to '$config_keep_months'."; fi
+					else
+						echo "ERROR! '$var' value in config file is out of range (1-12)!"
+						success=false
+					fi
+					;;
+				years)
+					if (( "$val" >= 1 )); then
+						config_keep_years="$val"
+						if $verbose; then echo "'$var' set to '$config_keep_years'."; fi
+					else
+						echo "ERROR! '$var' value in config file is out of range (1+)!"
 						success=false
 					fi
 					;;
@@ -258,7 +296,7 @@ function init_repository_symlinks() {
 		# create symlink for 'today'
 		local today_dir
 		local today
-		today=$(date +%d)
+		today="$d"
 		today_dir="$repo/$y/d${today}"
 		if $verbose; then echo -n "Creating symlink for 'today' pointing to '$today_dir'... "; fi
 		if ln -f -s "$today_dir" "$repo/today"; then
@@ -297,6 +335,94 @@ function init_repository_symlinks() {
 				success=false
 			fi
 		done
+	else
+		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
+		success=false
+	fi
+	
+	$success
+}
+
+function roll_repository_daily_to_monthly() {
+	local success=true
+	local repo="$1"
+	local day="$2"
+	local month="$3"
+	
+	
+	
+	$success;
+}
+
+function roll_repository_directories() {
+	local success=true
+	local repo="$1"
+	
+	if does_repository_exist "$repo"; then
+		# calculate today & keep-through dates
+		local today="$d"
+		local keep_through=$(date -v-${config_keep_days}d +%d)
+		if $verbose; then echo "Keeping files through 'd${keep_through}'."; fi
+		
+		# step through the subdirectories and "process" those that are outside the range to preserve (starting with yesterday)
+		local year="$y"
+		local month="$m"
+		local day=$(date -v-1d +%d)
+		local day_dir=''
+		local month_dir=''
+		while (( "$day" != "$today" )); do
+			# build the directory paths
+			printf -v day_dir "%s/%d/d%02d" "$repo" "$year" "$day"
+			printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$month"
+			
+			if $verbose; then echo -n "Processing directory '$day_dir'... "; fi
+			# are we keeping a range that doesn't wrap (i.e. today is greater than the day through which we're keeping)?
+			if (( ( $today >= $keep_through ) && ( $day >= $keep_through ) && ( $day <= $today ) )); then
+				if $verbose; then echo 'Keeping.'; fi
+			# or, are we keeping a range that wraps (i.e. the day through which we're keeping is greater than today)?
+			elif (( ( $today <= $keep_through ) && ( ( $day <= $today ) || ( $day >= $keep_through ) ) )); then
+				if $verbose; then echo 'Keeping.'; fi
+			# only process if this is outside the range to keep
+			else
+				if $verbose; then echo -n 'Processing...'; fi
+				
+				# move the contents of the day's directory to the appropriate month's directory
+				if roll_repository_daily_to_monthly "$repo" "$day" "$month"; then
+					if $verbose; then echo "Done."; fi
+				else
+					echo 'ERROR!'
+					echo "A fatal error occurred while processing attempting to move the contents of '$day_dir' to '$month_dir'!"
+					echo 'Exiting.'
+					exit 1
+				fi
+			fi
+			
+			# decrement the day & wrap around day, month, and year if we've gone under
+			(( day-- ))
+			if (( "$day" < 1 )); then
+				day=31
+				(( month-- ))
+				if (( "$month" < 1 )); then
+					month=12
+					(( year-- ));
+				fi
+			fi
+		done
+		
+		# we always process today (but we have to be extra careful since there's the possibility new files have already been stashed in it)
+		printf -v day_dir "%s/%d/d%02d" "$repo" "$year" "$day"
+		printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$month"
+		if $verbose; then echo -n "Processing directory '$day_dir'... Processing (special)... "; fi
+		# move the contents of the day's directory to the appropriate month's directory
+		if roll_repository_daily_to_monthly "$repo" "$day" "$month"; then
+			if $verbose; then echo "Done."; fi
+		else
+			echo 'ERROR!'
+			echo "A fatal error occurred while processing attempting to move the contents of '$day_dir' to '$month_dir'!"
+			echo 'Exiting.'
+			exit 1
+		fi
+		
 	else
 		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
 		success=false
@@ -422,6 +548,7 @@ if [ $# -gt 0 ]; then
 				run)
 					# load the config file
 					if load_config "$config_file"; then
+						# update convenience symlinks
 						if $verbose; then echo -n "Updating convenience symlinks in repository '${config_repository}'... "; fi
 						if init_repository_symlinks "$config_repository"; then
 							if $verbose; then echo 'Done.'; fi
@@ -429,7 +556,15 @@ if [ $# -gt 0 ]; then
 							if $verbose; then echo 'ERROR!'; fi
 							echo 'WARNING: An error occurred while creating/updating convenience symlinks. Proceeding, but something may be wrong!'
 						fi
-						#roll_repository_directories
+						
+						# roll the file sets in the directories
+						if $verbose; then echo -n "Processing directories in repository '${config_repository}'... "; fi
+						if roll_repository_directories "$config_repository"; then
+							if $verbose; then echo 'Done.'; fi
+						else
+							if $verbose; then echo 'ERROR!'; fi
+							exit 1
+						fi
 					else
 						echo "ERROR! An error occurred while loading the config file '${config_file}'!"
 						echo 'Exiting.'
