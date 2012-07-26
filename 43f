@@ -46,6 +46,7 @@ copyright='Copyright (c) 2009-2012 Morgan Aldridge'
 
 # global variables
 verbose=false
+dry_run=false
 config_file='/usr/local/etc/43f.conf'
 config_repository='/usr/local/var/db/43f'
 config_notify_email='root'
@@ -68,6 +69,7 @@ function usage() {
 	echo '  -c, --config=file : specify an alternate config file'
 	echo '             DEFAULT: /usr/local/etc/43f.conf'
 	echo '  -t                : check the config file and exit'
+	echo "  -n, --dry-run     : don't actually move/delete any files"
 	echo
 	echo 'Commands:'
 	echo '  init <path>       : initialize specified repository'
@@ -299,7 +301,7 @@ function init_repository_symlinks() {
 		today="$d"
 		today_dir="$repo/$y/d${today}"
 		if $verbose; then echo -n "Creating symlink for 'today' pointing to '$today_dir'... "; fi
-		if ln -f -s "$today_dir" "$repo/today"; then
+		if ln -f -h -s "$today_dir" "$repo/today"; then
 			if $verbose; then echo 'Done.'; fi
 		else
 			if $verbose; then echo 'ERROR!'; fi
@@ -312,7 +314,7 @@ function init_repository_symlinks() {
 		yesterday=$(date -v-1d +%d)
 		yesterday_dir="$repo/$y/d${yesterday}"
 		if $verbose; then echo -n "Creating symlink for 'yesterday' pointing to '$yesterday_dir'... "; fi
-		if ln -f -s "$yesterday_dir" "$repo/yesterday"; then
+		if ln -f -h -s "$yesterday_dir" "$repo/yesterday"; then
 			if $verbose; then echo 'Done.'; fi
 		else
 			if $verbose; then echo 'ERROR!'; fi
@@ -328,7 +330,7 @@ function init_repository_symlinks() {
 			weekday_dir="$repo/$y/d${weekday}"
 			weekday_name=$(date -v-${i}d +%A | tr '[:upper:]' '[:lower:]')
 			if $verbose; then echo -n "Creating symlink for '$weekday_name' pointing to '$weekday_dir'... "; fi
-			if ln -f -s "$weekday_dir" "$repo/$weekday_name"; then
+			if ln -f -h -s "$weekday_dir" "$repo/$weekday_name"; then
 				if $verbose; then echo 'Done.'; fi
 			else
 				if $verbose; then echo 'ERROR!'; fi
@@ -348,10 +350,48 @@ function roll_repository_daily_to_monthly() {
 	local repo="$1"
 	local day="$2"
 	local month="$3"
+	local mtime_today="$4"	# also include files modified today? "true"/"false"
+	local year="$y"
 	
+	if does_repository_exist "$repo"; then
+		local src
+		local dst
+		printf -v src "%s/%s/d%02d" "$repo" "$year" "$day"
+		printf -v dst "%s/%d/m%02d" "$repo" "$year" "$month"
+		if $verbose; then echo -n "Moving files & directories from '$src' to '$dst' ("; fi
+		if $mtime_today; then
+			if $verbose; then echo -n "including"; fi
+		else
+			if $verbose; then echo -n "excluding"; fi
+		fi
+		if $verbose; then echo -n " those modified today)... "; fi
+		
+		# step through all the matching (i.e. with or without a modification date of today) in the src dir and move them to dst
+		while IFS= read -r line; do
+			# don't bother processing an empty line or is the src directory itself
+			if [ -n "$line" ]; then
+				if $verbose; then echo -n "'$line'... "; fi
+				if ! $dry_run; then
+					if mv "$line" "$dst/"; then
+						echo "Done."
+					else
+						echo "ERROR!"
+						success=false
+					fi
+				elif $verbose; then
+					echo "Done."
+				fi
+			fi
+		done <<< "$(find "$src" -depth 1)"
+		
+		
+		if $verbose; then echo "Done."; fi
+	else
+		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
+		success=false
+	fi
 	
-	
-	$success;
+	$success
 }
 
 function roll_repository_directories() {
@@ -387,7 +427,7 @@ function roll_repository_directories() {
 				if $verbose; then echo -n 'Processing...'; fi
 				
 				# move the contents of the day's directory to the appropriate month's directory
-				if roll_repository_daily_to_monthly "$repo" "$day" "$month"; then
+				if roll_repository_daily_to_monthly "$repo" "$day" "$month" true; then
 					if $verbose; then echo "Done."; fi
 				else
 					echo 'ERROR!'
@@ -404,7 +444,7 @@ function roll_repository_directories() {
 				(( month-- ))
 				if (( "$month" < 1 )); then
 					month=12
-					(( year-- ));
+					(( year-- ))
 				fi
 			fi
 		done
@@ -414,7 +454,7 @@ function roll_repository_directories() {
 		printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$month"
 		if $verbose; then echo -n "Processing directory '$day_dir'... Processing (special)... "; fi
 		# move the contents of the day's directory to the appropriate month's directory
-		if roll_repository_daily_to_monthly "$repo" "$day" "$month"; then
+		if roll_repository_daily_to_monthly "$repo" "$day" "$month" false; then
 			if $verbose; then echo "Done."; fi
 		else
 			echo 'ERROR!'
@@ -422,7 +462,6 @@ function roll_repository_directories() {
 			echo 'Exiting.'
 			exit 1
 		fi
-		
 	else
 		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
 		success=false
@@ -518,6 +557,10 @@ if [ $# -gt 0 ]; then
 						echo 'Exiting.'
 						exit 1
 					fi
+					;;
+				# see if the user is requesting a dry run
+				"-n" | "--dry-run")
+					dry_run=true
 					;;
 				# handle other options
 					
