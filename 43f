@@ -53,6 +53,7 @@ config_notify_email='root'
 config_keep_days=31
 config_keep_months=12
 config_keep_years=10
+config_date_format="%Y-%m-%d-%H%M"
 
 y=`date "+%Y"`
 m=`date "+%m"`
@@ -159,6 +160,15 @@ function load_config() {
 						success=false
 					fi
 					;;
+				datestamp)
+						if [[ "$val" =~ ^[%-.YmdHMS]+$ ]]; then
+							config_date_format="$val"
+							if $verbose; then echo "'$var' set to '$config_date_format'."; fi
+						else
+							echo "ERROR! '$var' value in config file is out of range!"
+							success=false
+						fi
+					;;
 				*)
 					printf "Warning: Ignored unknown configuration variable '%s'.\n" "$var"
 					;;
@@ -184,6 +194,72 @@ function does_repository_exist() {
 	fi
 	
 	$success
+}
+
+# convert a date format string to a regular expression
+# 
+# # this and compare_date_stamped_filenames() use `sed`/`grep`, but should use something like http://sprunge.us/LZjS
+function date_format_to_regex() {
+	local success=true
+	local date_format="$1"
+	
+	# replace %Y with four digit year match
+	date_format=$(echo -n "$date_format" | sed -E "s/%Y/([0-9]{4})/g")
+	
+	# replace %m with two digit month match
+	date_format=$(echo -n "$date_format" | sed -E "s/%m/(0[123456789]|1[12])/g")
+	
+	# replace %d with two digit day match
+	date_format=$(echo -n "$date_format" | sed -E "s/%d/(0[123456789]|[12][0-9]|3[01])/g")
+	
+	# replace %H with two digit hour match
+	date_format=$(echo -n "$date_format" | sed -E "s/%H/([01][0-9]|2[0123])/g")
+	
+	# replace %M/%S with two digit minute/second match
+	date_format=$(echo -n "$date_format" | sed -E "s/(%M|%S)/([012345][0-9])/g")
+	
+	# replace %% with a single % (this should always be done last)
+	date_format=$(echo -n "$date_format" | sed -E "s/%%/%/g")
+	
+	echo -n "$date_format"
+	
+	$success;
+}
+
+# compare two date stamped filenames (note: datestamp must match 
+# returns 0 for no match, 1 if string1's timestamp is higher, or 2 if string2's datestamp is higher
+# 
+# this and date_format_to_regex() use `sed`/`grep`, but should use something like http://sprunge.us/LZjS
+function compare_date_stamped_filenames() {
+	local match=0
+	local file1="$1"
+	local file2="$2"
+	local date_regex=$(date_format_to_regex "$config_date_format")
+	
+	# are the filenames the same length? we have to be dealing with the same date format here!
+	if [ ${#file1} -eq ${#file2} ]; then
+		# do our files have a datestamp matching our format?
+		if [[ "$file1" =~ $date_regex && "$file2" =~ $date_regex ]]; then
+			# do the filenames match if we strip out those datestamps?
+			local file1_stripped=$(echo -n "$file1" | sed -E "s/${date_regex}//g")
+			local file2_stripped=$(echo -n "$file2" | sed -E "s/${date_regex}//g")
+			if [ "$file1_stripped" = "$file2_stripped" ]; then
+				# now we compare the dates, fortunately we use `date` compatible date formats so this is
+				# straightforward to extract the date from the filename & convert to epoch time
+				local file1_date=$(echo -n "$file1" | grep -o -E "$date_regex")
+				local file2_date=$(echo -n "$file2" | grep -o -E "$date_regex")
+				file1_date=$(date -j -f "$config_date_format" "$file1_date" "+%s")
+				file2_date=$(date -j -f "$config_date_format" "$file2_date" "+%s")
+				if [ $file1_date -gt $file2_date ]; then
+					match=1
+				elif [ $file1_date -lt $file2_date ]; then
+					match=2
+				fi
+			fi
+		fi
+	fi
+	
+	return $match
 }
 
 # initialize the repository
@@ -382,10 +458,77 @@ function roll_repository_daily_to_monthly() {
 					echo "Done."
 				fi
 			fi
-		done <<< "$(find "$src" -depth 1)"
+		done <<< "$(find -s "$src" -depth 1)"
 		
 		
 		if $verbose; then echo "Done."; fi
+	else
+		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
+		success=false
+	fi
+	
+	$success
+}
+
+function consolidate_repository_monthly() {
+	local success=true
+	local repo="$1"
+	local month="$2"
+	local year="$y"
+	
+	if does_repository_exist "$repo"; then
+		local dir
+		printf -v dir "%s/%d/m%02d" "$repo" "$year" "$month"
+		local last_file=''
+		
+		# step through all the files and directories and look for any with the same name except for a datestamp
+		while IFS= read -r line; do
+			# don't bother processing an empty line
+			if [[ ( -n "$line" ) && ( "$line" != "$dir" ) ]]; then
+				# if we don't have another file to compare against, we can't do anything
+				if [ -n "$last_file" ]; then
+					if $verbose; then echo -n "Comparing '$last_file' with '$line'... "; fi
+					compare_date_stamped_filenames "$last_file" "$line"
+					local match=$?
+					# don't do anthing if the filenames don't match
+					if [ $match -eq 0 ]; then
+						if $verbose; then echo "NO MATCH!"; fi
+					# if the first file has a newer date stamp, then keep it and remove the second
+					elif [ $match -eq 1 ]; then
+						if $verbose; then echo -n "Keeping the former... "; fi
+						if ! $dry_run; then
+							if rm -r "$line"; then
+								if $verbose; then echo "Done."; fi
+							else
+								if $verbose; then echo "ERROR!"; fi
+								success=false
+							fi
+						else
+							if $verbose; then echo "Done."; fi
+						fi
+					# if the second file has a newer date stamp, then keep it and remove the first
+					elif [ $match -eq 2 ]; then
+						if $verbose; then echo -n "Keeping the latter... "; fi
+						if ! $dry_run; then
+							if rm -r "$last_file"; then
+								if $verbose; then echo "Done."; fi
+							else
+								if $verbose; then echo "ERROR!"; fi
+								success=false
+							fi
+						else
+							if $verbose; then echo "Done."; fi
+						fi
+					fi
+					
+					if $verbose; then echo "Done."; fi
+				fi
+				
+				# store this filename to compare with the next one
+				last_file="$line"
+			fi
+		done <<< "$(find -s "$dir" -depth 1)" 
+		echo
 	else
 		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
 		success=false
@@ -461,6 +604,19 @@ function roll_repository_directories() {
 			echo "A fatal error occurred while processing attempting to move the contents of '$day_dir' to '$month_dir'!"
 			echo 'Exiting.'
 			exit 1
+		fi
+		
+		# finally, we consolidate files in the monthly directories
+		if $success; then
+			for (( month=1; month<=12; month++ )); do
+				printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$month"
+				if $verbose; then echo -n "Consolidating files & directories in '$month_dir'... "; fi
+					if consolidate_repository_monthly "$repo" "$month"; then
+						if $verbose; then echo "Done."; fi
+					else
+						if $verbose; then echo "ERROR!"; fi
+					fi
+			done
 		fi
 	else
 		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi

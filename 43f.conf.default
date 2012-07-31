@@ -5,3 +5,4 @@ notify=user1@domain.tld user2@domain.tld
 days=31
 months=12
 years=7
+datestamp=%Y-%m-%d-%H%M
