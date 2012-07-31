@@ -279,7 +279,7 @@ function init_repository() {
 			if $verbose; then echo 'exists.'; fi
 		else
 			if $verbose ; then echo -n 'does not exist. Creating... '; fi
-			if mkdir -p $repo; then
+			if $dry_run || mkdir -p $repo; then
 				if $verbose; then echo 'Done.'; fi
 			else
 				if $verbose; then echo 'Error!'; fi
@@ -302,7 +302,7 @@ function init_repository() {
 			if $verbose; then
 				printf "does not exist. Creating... "
 			fi
-			if mkdir $year_dir ; then
+			if $dry_run || mkdir $year_dir ; then
 				if $verbose ; then
 					printf "Done.\n"
 				fi
@@ -328,7 +328,7 @@ function init_repository() {
 			else
 				# create the month directory
 				if $verbose; then echo -n "does not exist. Creating... "; fi
-				if mkdir $month_dir; then
+				if $dry_run || mkdir $month_dir; then
 					if $verbose; then echo "Done."; fi
 				else
 					if $verbose; then echo "ERROR!"; fi
@@ -351,7 +351,7 @@ function init_repository() {
 		      else
 		      	# create the day directory
 		      	if $verbose; then echo -n "does not exist. Creating... "; fi
-		      	if mkdir $day_dir; then
+		      	if $dry_run || mkdir $day_dir; then
 		      		if $verbose; then echo "Done."; fi	
 		      	else
 		      		if $verbose; then echo "ERROR!"; fi
@@ -447,15 +447,11 @@ function roll_repository_daily_to_monthly() {
 			# don't bother processing an empty line or is the src directory itself
 			if [ -n "$line" ]; then
 				if $verbose; then echo -n "'$line'... "; fi
-				if ! $dry_run; then
-					if mv "$line" "$dst/"; then
-						echo "Done."
-					else
-						echo "ERROR!"
-						success=false
-					fi
-				elif $verbose; then
-					echo "Done."
+				if $dry_run || mv "$line" "$dst/"; then
+					if $verbose; then echo "Done."; fi
+				else
+				    if $verbose; then echo "ERROR!"; fi
+				    success=false
 				fi
 			fi
 		done <<< "$(find -s "$src" -depth 1)"
@@ -496,28 +492,20 @@ function consolidate_repository_monthly() {
 					# if the first file has a newer date stamp, then keep it and remove the second
 					elif [ $match -eq 1 ]; then
 						if $verbose; then echo -n "Keeping the former... "; fi
-						if ! $dry_run; then
-							if rm -r "$line"; then
-								if $verbose; then echo "Done."; fi
-							else
-								if $verbose; then echo "ERROR!"; fi
-								success=false
-							fi
-						else
+						if $dry_run || rm -r "$line"; then
 							if $verbose; then echo "Done."; fi
+						else
+						    if $verbose; then echo "ERROR!"; fi
+						    success=false
 						fi
 					# if the second file has a newer date stamp, then keep it and remove the first
 					elif [ $match -eq 2 ]; then
 						if $verbose; then echo -n "Keeping the latter... "; fi
-						if ! $dry_run; then
-							if rm -r "$last_file"; then
-								if $verbose; then echo "Done."; fi
-							else
-								if $verbose; then echo "ERROR!"; fi
-								success=false
-							fi
-						else
+						if $dry_run || rm -r "$last_file"; then
 							if $verbose; then echo "Done."; fi
+						else
+						    if $verbose; then echo "ERROR!"; fi
+						    success=false
 						fi
 					fi
 					
