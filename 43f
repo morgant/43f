@@ -105,7 +105,7 @@ function load_config() {
 	config_file="$1"
 	# does the config file exist?
 	if [ -n "$config_file" -a -e "$config_file" ]; then
-		if $verbose; then echo "Loading config file '${config_file}'."; fi
+		if $verbose; then echo "Loading config file '${config_file}'..."; fi
 		while IFS== read var val; do
 			case "$var" in
 				\#*)
@@ -115,10 +115,10 @@ function load_config() {
 					if [ -n "$val" -a -d "$val" ]; then
 						config_repository="$val"
 						if $verbose ; then
-							printf "'%s' set to '%s'.\n" "$var" "$config_repository"
+							printf "  '%s' set to '%s'.\n" "$var" "$config_repository"
 						fi
 					else
-						printf "ERROR! '%s' value in config file is either invalid or not a directory! You may need to run '43f init' to initialize the repository.\n" "$var"
+						printf "  ERROR! '%s' value in config file is either invalid or not a directory! You may need to run '43f init' to initialize the repository.\n" "$var"
 						success=false
 					fi
 					;;
@@ -126,54 +126,56 @@ function load_config() {
 					if echo "$val" | grep -q -i -E '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$' ; then
 						config_notify_email="$val"
 						if $verbose ; then
-							printf "'%s' set to '%s'.\n" "$var" "$config_notify_email"
+							printf "  '%s' set to '%s'.\n" "$var" "$config_notify_email"
 						fi
 					else
-						printf "ERROR! '%s' value in config file is not a valid email address!\n" "$var"
+						printf "  ERROR! '%s' value in config file is not a valid email address!\n" "$var"
 						success=false
 					fi
 					;;
 				days)
 					if (( ( "$val" >= 1 ) && ( "$val" <= 31 ) )); then
 						config_keep_days="$val"
-						if $verbose; then echo "'$var' set to '$config_keep_days'."; fi
+						if $verbose; then echo "  '$var' set to '$config_keep_days'."; fi
 					else
-						echo "ERROR! '$var' value in config file is out of range (1-31)!"
+						echo "  ERROR! '$var' value in config file is out of range (1-31)!"
 						success=false
 					fi
 					;;
 				months)
 					if (( ( "$val" >= 1 ) && ( "$val" <= 12 ) )); then
 						config_keep_months="$val"
-						if $verbose; then echo "'$var' set to '$config_keep_months'."; fi
+						if $verbose; then echo "  '$var' set to '$config_keep_months'."; fi
 					else
-						echo "ERROR! '$var' value in config file is out of range (1-12)!"
+						echo "  ERROR! '$var' value in config file is out of range (1-12)!"
 						success=false
 					fi
 					;;
 				years)
 					if (( "$val" >= 1 )); then
 						config_keep_years="$val"
-						if $verbose; then echo "'$var' set to '$config_keep_years'."; fi
+						if $verbose; then echo "  '$var' set to '$config_keep_years'."; fi
 					else
-						echo "ERROR! '$var' value in config file is out of range (1+)!"
+						echo "  ERROR! '$var' value in config file is out of range (1+)!"
 						success=false
 					fi
 					;;
 				datestamp)
 						if [[ "$val" =~ ^[%-.YmdHMS]+$ ]]; then
 							config_date_format="$val"
-							if $verbose; then echo "'$var' set to '$config_date_format'."; fi
+							if $verbose; then echo "  '$var' set to '$config_date_format'."; fi
 						else
-							echo "ERROR! '$var' value in config file is out of range!"
+							echo "  ERROR! '$var' value in config file is out of range!"
 							success=false
 						fi
 					;;
 				*)
-					printf "Warning: Ignored unknown configuration variable '%s'.\n" "$var"
+					printf "  Warning: Ignored unknown configuration variable '%s'.\n" "$var"
 					;;
 			esac
 		done < "$config_file"
+		
+		if $verbose; then echo '  Done.'; fi
 	else
 		if $verbose; then echo "ERROR! Config file '${config_file}' does not exist!"; fi
 		success=false
@@ -434,7 +436,7 @@ function roll_repository_daily_to_monthly() {
 		local dst
 		printf -v src "%s/%s/d%02d" "$repo" "$year" "$day"
 		printf -v dst "%s/%d/m%02d" "$repo" "$year" "$month"
-		if $verbose; then echo -n "Moving files & directories from '$src' to '$dst' ("; fi
+		if $verbose; then echo -n $'\n'"    Moving files & directories from '$src' to '$dst' ("; fi
 		if $mtime_today; then
 			if $verbose; then echo -n "including"; fi
 		else
@@ -446,7 +448,7 @@ function roll_repository_daily_to_monthly() {
 		while IFS= read -r line; do
 			# don't bother processing an empty line or is the src directory itself
 			if [ -n "$line" ]; then
-				if $verbose; then echo -n "'$line'... "; fi
+				if $verbose; then echo -n $'\n'"      '$line'... "; fi
 				if $dry_run || mv "$line" "$dst/"; then
 					if $verbose; then echo "Done."; fi
 				else
@@ -516,7 +518,6 @@ function consolidate_repository_monthly() {
 				last_file="$line"
 			fi
 		done <<< "$(find -s "$dir" -depth 1)" 
-		echo
 	else
 		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
 		success=false
@@ -555,11 +556,11 @@ function roll_repository_directories() {
 				if $verbose; then echo 'Keeping.'; fi
 			# only process if this is outside the range to keep
 			else
-				if $verbose; then echo -n 'Processing...'; fi
+				if $verbose; then echo -n $'\n''  Processing...'; fi
 				
 				# move the contents of the day's directory to the appropriate month's directory
 				if roll_repository_daily_to_monthly "$repo" "$day" "$month" true; then
-					if $verbose; then echo "Done."; fi
+					if $verbose; then echo "  Done."; fi
 				else
 					echo 'ERROR!'
 					echo "A fatal error occurred while processing attempting to move the contents of '$day_dir' to '$month_dir'!"
@@ -583,10 +584,10 @@ function roll_repository_directories() {
 		# we always process today (but we have to be extra careful since there's the possibility new files have already been stashed in it)
 		printf -v day_dir "%s/%d/d%02d" "$repo" "$year" "$day"
 		printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$month"
-		if $verbose; then echo -n "Processing directory '$day_dir'... Processing (special)... "; fi
+		if $verbose; then echo -n "Processing directory '$day_dir'... "$'\n'"  Processing (special)... "; fi
 		# move the contents of the day's directory to the appropriate month's directory
 		if roll_repository_daily_to_monthly "$repo" "$day" "$month" false; then
-			if $verbose; then echo "Done."; fi
+			if $verbose; then echo "  Done."; fi
 		else
 			echo 'ERROR!'
 			echo "A fatal error occurred while processing attempting to move the contents of '$day_dir' to '$month_dir'!"
