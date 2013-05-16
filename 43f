@@ -75,6 +75,7 @@ function usage() {
 	echo 'Commands:'
 	echo '  init <path>       : initialize specified repository'
 	echo '  run               : perform storage management'
+	echo '  stats             : print repository stats'
 	echo
 	echo 'Config File Options:'
 	echo '  repository        : absolute path to archive repository'
@@ -105,8 +106,7 @@ function load_config() {
 	# does the config file exist?
 	if [ -n "$config_file" -a -e "$config_file" ]; then
 		if $verbose; then echo "Loading config file '${config_file}'."; fi
-		IFS==
-		while read var val; do
+		while IFS== read var val; do
 			case "$var" in
 				\#*)
 					# do nothing - this would be a comment
@@ -544,14 +544,14 @@ function roll_repository_directories() {
 		while (( "$day" != "$today" )); do
 			# build the directory paths
 			printf -v day_dir "%s/%d/d%02d" "$repo" "$year" "$day"
-			printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$month"
+			printf -v month_dir "%s/%d/m%02d" "$repo" "$year" $(( 10#$month ))
 			
 			if $verbose; then echo -n "Processing directory '$day_dir'... "; fi
 			# are we keeping a range that doesn't wrap (i.e. today is greater than the day through which we're keeping)?
-			if (( ( $today >= $keep_through ) && ( $day >= $keep_through ) && ( $day <= $today ) )); then
+			if (( ( 10#$today >= 10#$keep_through ) && ( 10#$day >= 10#$keep_through ) && ( 10#$day <= 10#$today ) )); then
 				if $verbose; then echo 'Keeping.'; fi
 			# or, are we keeping a range that wraps (i.e. the day through which we're keeping is greater than today)?
-			elif (( ( $today <= $keep_through ) && ( ( $day <= $today ) || ( $day >= $keep_through ) ) )); then
+			elif (( ( 10#$today <= 10#$keep_through ) && ( ( 10#$day <= 10#$today ) || ( 10#$day >= 10#$keep_through ) ) )); then
 				if $verbose; then echo 'Keeping.'; fi
 			# only process if this is outside the range to keep
 			else
@@ -569,10 +569,10 @@ function roll_repository_directories() {
 			fi
 			
 			# decrement the day & wrap around day, month, and year if we've gone under
-			(( day-- ))
-			if (( "$day" < 1 )); then
+			day=$(( 10#$day - 1 ))
+			if (( 10#$day < 1 )); then
 				day=31
-				(( month-- ))
+				month=$(( 10#$month - 1 ))
 				if (( "$month" < 1 )); then
 					month=12
 					(( year-- ))
@@ -613,6 +613,465 @@ function roll_repository_directories() {
 	
 	$success
 }
+
+# convert kilobytes to human readable
+function kb_to_hr() {
+	local success=true
+	local kb="$1"
+	
+	# is this a whole number?
+	if [[ "$kb" =~ ^[0-9]+$ ]]; then
+		# terabytes?
+		if [ "$kb" -ge 1073741824 ]; then
+			printf "%.0fTB" $(( $kb / 1073741824 ))
+		# gigabytes?
+		elif [ "$kb" -ge 1049000 ]; then
+			printf "%.0fGB" $(( $kb / 1049000 ))
+		# megabytes?
+		elif [ "$kb" -ge 1024 ]; then
+			printf "%.0fMB" $(( $kb / 1024 ))
+		else
+			printf "%.0fKB" $kb
+		fi
+	else
+		success=false
+	fi
+	
+	$success
+}
+
+# calculate file/directory disk usage in kilobytes
+function du_kb() {
+	local usage=$(du -ks "$1" | cut -f 1)
+	if [ $? -eq 0 ]; then
+		printf "%.0f" "$usage"
+		true
+	else
+		false
+	fi
+}
+
+# calculate file/directory available disk space in kilobytes
+function df_kb() {
+	local free=$(df -k "$1" | tail -n 1 | awk '{ print $4 }')
+	if [ $? -eq 0 ]; then
+		printf "%.0f" "$free"
+		true
+	else
+		false
+	fi
+}
+
+# get a list of disk space usages for daily directories
+function get_daily_usages() {
+	local success=true
+	local repo="$1"
+	
+	if does_repository_exist "$repo"; then
+		# calculate today & keep-through dates
+		local today="$d"
+		local keep_through=$(date -v-${config_keep_days}d +%d)
+		
+		# step through the subdirectories and calculate usage for those that are inside the range to preserve (starting with today)
+		local year="$y"
+		local month="$m"
+		local day="$d"
+		local day_dir=''
+		while true; do
+			# build the directory path
+			printf -v day_dir "%s/%d/d%02d" "$repo" "$year" $(( 10#$day ))
+			
+			# are we keeping a range that doesn't wrap (i.e. today is greater than the day through which we're keeping)?
+			# or, are we keeping a range that wraps (i.e. the day through which we're keeping is greater than today)?
+			if (( ( ( 10#$today >= 10#$keep_through ) && ( 10#$day >= 10#$keep_through ) && ( 10#$day <= 10#$today ) ) || ( ( 10#$today <= 10#$keep_through ) && ( ( 10#$day <= 10#$today ) || ( 10#$day >= 10#$keep_through ) ) ) )); then
+				# calculate the usage, add to total, increment the counter
+				local usage=$(du_kb "$day_dir")
+				if [ $? -eq 0 ]; then
+					printf "%.0f" "$usage"
+				else
+					success=false
+				fi
+			fi
+			
+			# decrement the day & wrap around day, month, and year if we've gone under
+			day=$(( 10#$day - 1 ))
+			if (( 10#$day < 1 )); then
+				day=31
+				month=$(( 10#$month - 1 ))
+				if (( 10#$month < 1 )); then
+					month=12
+					(( year-- ))
+				fi
+			fi
+			
+			# if we've gone all the way back around to today, break out of the loop
+			if [ "$day" -eq "$today" ]; then
+				break;
+			else
+				printf "\n"
+			fi
+		done
+	else	
+		success=false
+	fi
+	
+	$success
+}
+
+# get a list of disk space usages for monthly directories
+function get_monthly_usages() {
+	local success=true
+	local repo="$1"
+	
+	if does_repository_exist "$repo"; then
+		# calculate this month & keep through months
+		local this_month="$m"
+		local keep_through="$(date -v-${config_keep_months}m +%m)"
+		
+		# step through the subdirectories and calculate usage for those that are inside the range to preserve (starting with this month)
+		local year="$y"
+		local month="$m"
+		local month_dir=''
+		while true; do
+			# build the directory path
+			printf -v month_dir "%s/%d/m%02d" "$repo" "$year" $(( 10#$month ))
+			
+			# are we keeping a range that doesn't wrap (i.e. this month is greater than the month through which we're keeping)?
+			# or, are we keeping a range that wraps (i.e. the month through which we're keeping is greater than this month)?
+			if (( ( ( 10#$this_month >= 10#$keep_through ) && ( 10#$month >= 10#$keep_through ) ) || ( ( 10#$this_month <= 10#$keep_through ) && ( ( 10#$month <= 10#$this_month ) || ( 10#$month >= 10#$keep_through ) ) ) )); then
+				# calculate the usage, add to total, increment the counter
+				local usage=$(du_kb "$month_dir")
+				if [ $? -eq 0 ]; then
+					printf "%.0f" "$usage"
+				else
+					success=false
+				fi
+			fi
+			
+			# decrement the month & wrap around month and year if we've gone under
+			month=$(( 10#$month - 1))
+			if (( 10#$month < 1 )); then
+				month=12
+				(( year-- ))
+			fi
+			
+			# if we've gone all the way back around to this month, break out of the loop
+			if [ "$month" -eq "$this_month" ]; then
+				break;
+			else
+				printf "\n"
+			fi
+		done
+	else
+		success=false
+	fi
+	
+	$success
+}
+
+# get a list of disk space usages for annual directories
+function get_annual_usages() {
+	local success=true
+	local repo="$1"
+	
+	if does_repository_exist "$repo"; then
+		# calculate this year & keep through years
+		local this_year="$y"
+		local keep_through="$(date -v-${config_keep_years}y +%Y)"
+		
+		# step through the subdirectories and calculate usage
+		local year="$y"
+		local year_dir=''
+		while (( year >= keep_through )); do
+			# build the directory path
+			printf -v year_dir "%s/%d" "$repo" "$year"
+			
+			# calculate the usage (if the year directory exists)
+			if [ -d "$year_dir" ]; then
+				local usage=$(du_kb "$year_dir")
+				if [ $? -eq 0 ]; then
+					printf "%.0f\n" "$usage"
+				else
+					success=false
+				fi
+			else
+				printf "0\n"
+			fi
+			
+			# decrement the year
+			(( year-- ))
+		done
+	else
+		success=false
+	fi
+	
+	$success
+}
+
+# calculate the average (mean) daily disk usage for a repository
+function calculate_repository_mean_usage() {
+	local success=true
+	local repo="$1"
+	local stratum="$2"
+	local total_usage=0
+	local n=0 
+	
+	if does_repository_exist "$repo"; then
+		local usage=0
+		while IFS= read -r usage; do
+		   (( total_usage += usage ))
+		   (( n++ ))
+		done <<< "$(get_${stratum}_usages "$repo")"
+		if [ $? -ne 0 ]; then
+			success=false
+		fi
+	fi
+	
+	# output the average
+	if $success; then
+		printf "%.0f" $(( total_usage/n ))
+	fi
+	
+	$success
+}
+
+# calculate the minimum daily disk usage for a repository
+function calculate_repository_min_usage() {
+	local success=true
+	local repo="$1"
+	local stratum="$2"
+	local min_usage=''
+	
+	if does_repository_exist "$repo"; then
+		local usage=0
+		while IFS= read -r usage; do
+			if [ -z "$min_usage" ]; then
+				min_usage="$usage"
+			elif [[ (( usage < min_usage )) ]]; then
+				min_usage="$usage"
+			fi
+		done <<< "$(get_${stratum}_usages "$repo")"
+		if [ $? -ne 0 ]; then
+			success=false
+		fi
+	fi
+	
+	# output the minimum
+	if $success; then
+		printf "%.0f" "$min_usage"
+	fi
+	
+	$success
+}
+
+# calculate the median daily disk usage for a repository
+function calculate_repository_median_usage() {
+	local success=true
+	local repo="$1"
+	local stratum="$2"
+	local usages=()
+	
+	if does_repository_exist "$repo"; then
+		local usage=0
+		while IFS= read -r usage; do
+			usages+=("$usage")
+		done <<< "$(get_${stratum}_usages "$repo")"
+		if [ $? -ne 0 ]; then
+			success=false
+		fi
+	fi
+	
+	# output the minimum
+	if $success; then
+		local median=$(( ${#usages[@]} / 2 ))
+		IFS=$'\n' usages=($(sort <<<"${usages[*]}"))
+		median_usage="${usages[$median]}"
+		printf "%.0f" "$median_usage"
+	fi
+	
+	$success
+}
+
+# calculate the maximum daily disk usage for a repository
+function calculate_repository_max_usage() {
+	local success=true
+	local repo="$1"
+	local stratum="$2"
+	local max_usage=''
+	
+	if does_repository_exist "$repo"; then
+		local usage=0
+		while IFS= read -r usage; do
+			if [ -z "$max_usage" ]; then
+				max_usage="$usage"
+			elif [[ (( $usage > $max_usage )) ]]; then
+				max_usage="$usage"
+			fi
+		done <<< "$(get_${stratum}_usages "$repo")"
+		if [ $? -ne 0 ]; then
+			success=false
+		fi
+	fi
+	
+	# output the maximum
+	if $success; then
+		printf "%.0f" "$max_usage"
+	fi
+	
+	$success
+}
+
+# print out repository stats
+function print_repository_stats() {
+	local success=true
+	local repo="$1"
+	
+	if does_repository_exist "$repo"; then
+		local disk_usage
+		local disk_free
+		local min_daily_usage
+		local min_monthly_usage
+		local min_annual_usage
+		local median_daily_usage
+		local median_monthly_usage
+		local median_annual_usage
+		local max_daily_usage
+		local max_monthly_usage
+		local max_annual_usage
+		local mean_daily_usage
+		local mean_monthly_usage
+		local mean_annual_usage
+		
+		# calculate disk usage for the repository
+		disk_usage=$(kb_to_hr $(du_kb "$repo"))
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating disk space used by the repository '$repo'!"
+			success=false
+		fi
+		
+		# calculate available disk space
+		disk_free=$(kb_to_hr $(df_kb "$repo"))
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating disk space available to the repository '$repo'!"
+			success=false
+		fi
+		
+		# calculate minimum daily disk usage
+		min_daily_usage=$(kb_to_hr $(calculate_repository_min_usage "$repo" daily))
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating minimum daily disk space used by the repository '$repo'!"
+			success=false
+		fi
+		
+		# calculate median daily disk usage
+		median_daily_usage=$(kb_to_hr $(calculate_repository_median_usage "$repo" daily))
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating median daily disk space used by the repository '$repo'!"
+			success=false
+		fi
+		
+		# calculate maximum daily disk usage
+		max_daily_usage=$(kb_to_hr $(calculate_repository_max_usage "$repo" daily))
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating maximum daily disk space used by the repository '$repo'!"
+			success=false
+		fi
+		
+		# calculate average (mean) daily disk usage
+		mean_daily_usage=$(kb_to_hr $(calculate_repository_mean_usage "$repo" daily))
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating average daily disk space used by the repository '$repo'!"
+			success=false
+		fi
+		
+		# calculate minimum monthly disk usage
+		min_monthly_usage=$(kb_to_hr $(calculate_repository_min_usage "$repo" monthly))
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating minimum monthly disk space used by the repository '$repo'!"
+			success=false
+		fi
+		
+		# calculate median monthly disk usage
+		median_monthly_usage=$(kb_to_hr $(calculate_repository_median_usage "$repo" monthly))
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating median monthly disk space used by the repository '$repo'!"
+			success=false
+		fi
+		
+		# calculate maximum monthly disk usage
+		max_monthly_usage=$(kb_to_hr $(calculate_repository_max_usage "$repo" monthly))
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating maximum monthly disk space used by the repository '$repo'!"
+			success=false
+		fi
+		
+		# calculate average monthly disk usage
+		mean_monthly_usage=$(kb_to_hr $(calculate_repository_mean_usage "$repo" monthly))
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating average monthly disk space used by the repository '$repo'!"
+			success=false
+		fi
+		
+		# calculate minimum annual disk usage
+		min_annual_usage=$(kb_to_hr $(calculate_repository_min_usage "$repo" annual))
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating minimum annual disk space used by the repository '$repo'!"
+			success=false
+		fi
+		
+		# calculate median annual disk usage
+		median_annual_usage=$(kb_to_hr $(calculate_repository_median_usage "$repo" annual))
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating median annual disk space used by the repository '$repo'!"
+			success=false
+		fi
+		
+		# calculate maximum annual disk us
+		max_annual_usage=$(kb_to_hr $(calculate_repository_max_usage "$repo" annual))
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating maximum annual disk space used by the repository '$repo'!"
+			success=false
+		fi
+		
+		# calculate average annual disk usage
+		mean_annual_usage=$(kb_to_hr $(calculate_repository_mean_usage "$repo" annual))
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating average annual disk space used by the repository '$repo'!"
+			success=false
+		fi
+		
+		# print the stats
+		if $success; then
+			echo "Statistics for repository '$repo':"$'\n'
+			echo "${config_keep_days} day(s), ${config_keep_months} month(s), and ${config_keep_years} year(s) of data will be preserved."$'\n'
+			echo "Total Disk Space Used:    $disk_usage"
+			echo "Available Disk Space:     $disk_free"
+			echo 'Daily Data Disk Usage:'
+			echo "  Minimum:                $min_daily_usage"
+			echo "  Median:                 $median_daily_usage"
+			echo "  Maximum:                $max_daily_usage"
+			echo "  Average:                $mean_daily_usage"
+			echo 'Monthly Data Disk Usage:'
+			echo "  Minimum:                $min_monthly_usage"
+			echo "  Median:                 $median_monthly_usage"
+			echo "  Maximum:                $max_monthly_usage"
+			echo "  Average:                $mean_monthly_usage"
+			echo 'Annual Data Disk Usage:'
+			echo "  Minimum:                $min_annual_usage"
+			echo "  Median:                 $median_annual_usage"
+			echo "  Maximum:                $max_annual_usage"
+			echo "  Average:                $mean_annual_usage"
+		else
+			echo "ERROR! An error occurred while gathering statistics, so can't safely print them!"
+		fi
+	else
+		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
+		success=false
+	fi
+	
+	$success
+}
+
 
 # see if any arguments were passed in
 if [ $# -gt 0 ]; then
@@ -750,6 +1209,22 @@ if [ $# -gt 0 ]; then
 							if $verbose; then echo 'Done.'; fi
 						else
 							if $verbose; then echo 'ERROR!'; fi
+							exit 1
+						fi
+					else
+						echo "ERROR! An error occurred while loading the config file '${config_file}'!"
+						echo 'Exiting.'
+						exit 1
+					fi
+					;;
+				# see if the user requested stats
+				stats)
+					# load the config file
+					if load_config "$config_file"; then
+						# print out the stats
+						if ! print_repository_stats "$config_repository"; then
+							echo 'ERROR! An error occured while generating stats!'
+							echo 'Exiting!'
 							exit 1
 						fi
 					else
