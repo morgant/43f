@@ -434,6 +434,7 @@ function roll_repository_daily_to_monthly() {
 	if does_repository_exist "$repo"; then
 		local src
 		local dst
+		local mtime=''
 		printf -v src "%s/%s/d%02d" "$repo" "$year" "$day"
 		printf -v dst "%s/%d/m%02d" "$repo" "$year" "$month"
 		if $verbose; then echo -n $'\n'"    Moving files & directories from '$src' to '$dst' ("; fi
@@ -441,6 +442,7 @@ function roll_repository_daily_to_monthly() {
 			if $verbose; then echo -n "including"; fi
 		else
 			if $verbose; then echo -n "excluding"; fi
+			mtime='-mtime +0'
 		fi
 		if $verbose; then echo -n " those modified today)... "; fi
 		
@@ -456,7 +458,7 @@ function roll_repository_daily_to_monthly() {
 				    success=false
 				fi
 			fi
-		done <<< "$(find -s "$src" -depth 1)"
+		done <<< "$(find -s "$src" -depth 1 $mtime)"
 		
 		
 		if $verbose; then echo "Done."; fi
