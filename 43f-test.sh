@@ -102,3 +102,29 @@ it_fails_config_test_with_invalid_datestamp() {
 	test "$out" = "  ERROR! 'datestamp' value in config file is out of range!"
 }
 
+it_does_not_move_files_modified_today_in_todays_dir() {
+	y="$(date +%Y)"
+	printf -v d "d%02i" "$(date +%d)"
+	
+	# create a file in today's directory (leaving creation/modification time set to today) and do `43f run`
+	./43f init tmp
+	touch "tmp/${y}/${d}/test_file"
+	./43f -c tmp/temp.conf run
+	
+	# it should've stayed put in today's directory
+	test -f "tmp/${y}/${d}/test_file"
+}
+
+it_does_move_files_modified_last_month_in_todays_dir() {
+	y="$(date +%Y)"
+	printf -v d "d%02i" "$(date +%d)"
+	
+	# create a file in today's directory (setting the creation/modification time to last month) and do `43f run`
+	./43f init tmp
+	touch -t "$(date -v-1m +%Y%m%d%H%M.%S)" "tmp/${y}/${d}/test_file"
+	./43f -c tmp/temp.conf run
+	
+	# it should've been moved to last month's directory
+	printf -v m "m%02i" "$(date -v-1m +%m)"
+	test -f "tmp/${y}/${m}/test_file"
+}
