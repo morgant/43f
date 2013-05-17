@@ -102,7 +102,7 @@ it_fails_config_test_with_invalid_datestamp() {
 	test "$out" = "  ERROR! 'datestamp' value in config file is out of range!"
 }
 
-it_does_not_move_files_modified_today_in_todays_dir() {
+it_does_not_move_files_modified_today_from_todays_dir() {
 	y="$(date +%Y)"
 	printf -v d "d%02i" "$(date +%d)"
 	
@@ -115,7 +115,7 @@ it_does_not_move_files_modified_today_in_todays_dir() {
 	test -f "tmp/${y}/${d}/test_file"
 }
 
-it_does_move_files_modified_last_month_in_todays_dir() {
+it_does_move_files_modified_last_month_from_todays_dir() {
 	y="$(date +%Y)"
 	printf -v d "d%02i" "$(date +%d)"
 	
@@ -127,4 +127,80 @@ it_does_move_files_modified_last_month_in_todays_dir() {
 	# it should've been moved to last month's directory
 	printf -v m "m%02i" "$(date -v-1m +%m)"
 	test -f "tmp/${y}/${m}/test_file"
+}
+
+it_does_not_move_files_within_days_to_keep_dirs() {
+	# create files in all the "to keep" dirs and do `43f run`
+	./43f init tmp
+	today="$(date +%d)"
+	for (( i=0; i<7; i++ )); do
+		y="$(date +%Y)"
+		if (( ( $today - $i ) > 0 )); then
+			printf -v d "d%02i" $(( $today - $i ))
+		else
+			printf -v d "d%02i" $(( 31 - ( $i - $today ) ))
+			if [ "$(date +%m)" -eq 1 ]; then
+				y="$(( $y - 1 ))"
+			fi
+		fi
+		touch "tmp/${y}/${d}/${d}_test_file"
+	done
+	./43f -c tmp/temp.conf run
+	
+	# they all should've stayed put in the "to keep" dirs
+	success=0
+	for (( i=0; i<7; i++ )); do
+		y="$(date +%Y)"
+		if (( ( $today - $i ) > 0 )); then
+			printf -v d "d%02i" $(( $today - $i ))
+		else
+			printf -v d "d%02i" $(( 31 - ( $i - $today ) ))
+			if [ "$(date +%m)" -eq 1 ]; then
+				y="$(( $y - 1 ))"
+			fi
+		fi
+		if [ ! -f "tmp/${y}/${d}/${d}_test_file" ]; then success=1; fi
+	done
+	
+	return $success
+}
+
+it_does_move_files_outside_days_to_keep_dirs() {
+	# create files in all the directories except the "to keep" dirs and do `43f run`
+	./43f init tmp
+	today="$(date +%d)"
+	for (( i=7; i<31; i++ )); do
+		y="$(date +%Y)"
+		if (( ( $today - $i ) > 0 )); then
+			printf -v d "d%02i" $(( $today - $i ))
+		else
+			printf -v d "d%02i" $(( 31 - ( $i - $today ) ))
+			if [ "$(date +%m)" -eq 1 ]; then
+				y="$(( $y - 1 ))"
+			fi
+		fi
+		touch "tmp/${y}/${d}/${d}_test_file"
+	done
+	./43f -c tmp/temp.conf run
+	
+	# they all should've been moved to the appropriate month dirs
+	success=0
+	for (( i=7; i<31; i++ )); do
+		y="$(date +%Y)"
+		m="$(date +%m)"
+		if (( ( $today - $i ) > 0 )); then
+			printf -v d "d%02i" $(( $today - $i ))
+		else
+			printf -v d "d%02i" $(( 31 - ( $i - $today ) ))
+			m="$(( $m - 1))"
+			if [ "$m" -lt 1 ]; then
+				y="$(( $y - 1 ))"
+				m=12
+			fi
+		fi
+		printf -v m "m%02i" "$m"
+		if [ ! -f "tmp/${y}/${m}/${d}_test_file" ]; then success=1; fi
+	done
+	
+	return $success
 }
