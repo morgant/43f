@@ -535,7 +535,7 @@ function roll_repository_directories() {
 	if does_repository_exist "$repo"; then
 		# calculate today & keep-through dates
 		local today="$d"
-		local keep_through=$(date -v-${config_keep_days}d +%d)
+		local keep_through=$(date -v-$((${config_keep_days} - 1 ))d +%d)
 		if $verbose; then echo "Keeping files through 'd${keep_through}'."; fi
 		
 		# step through the subdirectories and "process" those that are outside the range to preserve (starting with yesterday)
