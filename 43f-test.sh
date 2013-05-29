@@ -130,7 +130,7 @@ it_does_move_files_modified_last_month_from_todays_dir() {
 }
 
 it_does_not_move_files_within_days_to_keep_dirs() {
-	# create files in all the "to keep" dirs and do `43f run`
+	# create files in all the "to keep" day dirs and do `43f run`
 	./43f init tmp
 	today="$(date +%d)"
 	for (( i=0; i<7; i++ )); do
@@ -147,7 +147,7 @@ it_does_not_move_files_within_days_to_keep_dirs() {
 	done
 	./43f -c tmp/temp.conf run
 	
-	# they all should've stayed put in the "to keep" dirs
+	# they all should've stayed put in the "to keep" day dirs
 	success=0
 	for (( i=0; i<7; i++ )); do
 		y="$(date +%Y)"
@@ -166,7 +166,7 @@ it_does_not_move_files_within_days_to_keep_dirs() {
 }
 
 it_does_move_files_outside_days_to_keep_dirs() {
-	# create files in all the directories except the "to keep" dirs and do `43f run`
+	# create files in all the directories except the "to keep" day dirs and do `43f run`
 	./43f init tmp
 	today="$(date +%d)"
 	for (( i=7; i<31; i++ )); do
@@ -200,6 +200,118 @@ it_does_move_files_outside_days_to_keep_dirs() {
 		fi
 		printf -v m "m%02i" "$m"
 		if [ ! -f "tmp/${y}/${m}/${d}_test_file" ]; then success=1; fi
+	done
+	
+	return $success
+}
+
+it_does_not_move_files_inside_months_to_keep_dirs() {
+	# set up the repository, incl. the previous year's directories
+	./43f init tmp
+	y="$(date +%Y)"
+	prev_year="$(( $y - 1 ))"
+	mkdir "tmp/${prev_year}"
+	for (( i=1; i<=12; i++ )); do
+		printf -v m "m%02i" $i
+		mkdir "tmp/${prev_year}/${m}"
+	done
+	for (( i=1; i<=31; i++ )); do
+		printf -v d "d%02i" $i
+		mkdir "tmp/${prev_year}/${d}"
+	done
+
+	# create files in all the "to keep" month dirs and do `43f run`
+	this_month="$(date +%m)"
+	for (( i=0; i<6; i++ )); do
+		y="$(date +%Y)"
+		if (( ( 10#$this_month - $i ) > 0 )); then
+			printf -v m "m%02i" $(( 10#$this_month - $i ))
+		else
+			printf -v m "m%02i" $(( 12 - ( $i - 10#$this_month ) ))
+			y="$(( $y - 1 ))"
+		fi
+		if [ -d "tmp/${y}" ]; then
+			touch "tmp/${y}/${m}/${m}_test_file"
+		fi
+	done
+	./43f -c tmp/temp.conf run
+	
+	# they all should have stayed put in the "to keep" month dirs
+	success=0
+	for (( i=0; i<6; i++ )); do
+		y="$(date +%Y)"
+		if (( ( 10#$this_month - $i ) > 0 )); then
+			printf -v m "m%02i" $(( 10#$this_month - $i ))
+		else
+			printf -v m "m%02i" $(( 12 - ( $i - 10#$this_month ) ))
+			y="$(( $y - 1 ))"
+		fi
+		if [ -d "tmp/${y}" ]; then
+			if [ ! -f "tmp/${y}/${m}/${m}_test_file" ]; then success=1; fi
+		fi
+	done
+	
+	return $success
+}
+
+it_does_move_files_outside_months_to_keep_dirs() {
+	# set up the repository, incl. the previous year's directories
+	./43f init tmp
+	y="$(date +%Y)"
+	prev_year="$(( $y - 1 ))"
+	mkdir "tmp/${prev_year}"
+	for (( i=1; i<=12; i++ )); do
+		printf -v m "m%02i" $i
+		mkdir "tmp/${prev_year}/${m}"
+	done
+	for (( i=1; i<=31; i++ )); do
+		printf -v d "d%02i" $i
+		mkdir "tmp/${prev_year}/${d}"
+	done
+	
+	# create files in all the directories except the "to keep" month dirs and do `43f run`
+	this_month="$(date +%m)"
+	for (( i=6; i<12; i++ )); do
+		y="$(date +%Y)"
+		if (( ( 10#$this_month - $i ) > 0 )); then
+			printf -v m "m%02i" $(( 10#$this_month - $i ))
+		else
+			printf -v m "m%02i" $(( 12 - ( $i - 10#$this_month ) ))
+			y="$(( $y - 1 ))"
+		fi
+		if [ -d "tmp/${y}" ]; then
+			touch "tmp/${y}/${m}/${m}_test_file"
+		fi
+	done
+	./43f -c tmp/temp.conf run
+	
+	# determine the "to keep" month & year
+	keep_year="$(date +%Y)"
+	keep_month="$(( 10#$this_month - 6 ))"
+	if (( 10#$keep_month < 1 )); then
+		keep_month="01"
+		keep_prev_year="$(( $keep_year - 1 ))"
+		keep_prev_month="m12"
+	fi
+	keep_month="m${keep_month}"
+	
+	# they all should've been moved to the appropriate "to keep" month dir
+	success=0
+	for (( i=6; i<12; i++ )); do
+		y="$(date +%Y)"
+		if (( ( 10#$this_month - $i ) > 0 )); then
+			printf -v m "m$02i" $(( 10#$this_month - $i ))
+		else
+			printf -v m "m%02i"  $(( 12 - ( $i - 10#$this_month ) ))
+			y="$(( $y - 1 ))"
+		fi
+		if [ -d "tmp/${y}" ]; then
+			if (( $y == $keep_year )); then
+				if [ ! -f "tmp/${y}/${keep_month}/${m}_test_file" ]; then success=1; fi
+			else
+				if [ ! -f "tmp/${keep_prev_year}/${keep_prev_month}/${m}_test_file"; then success=1; fi
+			fi
+		fi
 	done
 	
 	return $success
