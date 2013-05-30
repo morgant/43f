@@ -528,6 +528,39 @@ function consolidate_repository_monthly() {
 	$success
 }
 
+function purge_year_directories() {
+	local success=true
+	local repo="$1"
+	
+	if does_repository_exist "$repo"; then
+		if $verbose; then echo; fi
+		# calculate keep-through year
+		local keep_through=$(date -v-$(( ${config_keep_years} - 1 ))y +%Y)
+		
+		# step through all the year directories that exist and delete any that are older than our "keep through" year
+		while IFS= read -r line; do
+			local year="$(basename "$line")"
+			if [[ "$year" =~ ^[0-9]{4}$ ]] && (( $year < $keep_through )); then
+				if $verbose; then echo -n "  Deleting $year directory... "; fi
+				if rm -r "${repo}/${year}"; then
+					if $verbose; then echo "Done."; fi
+				else
+					if $verbose; then echo "ERROR!"; fi
+					success=false
+				fi
+			else
+				if $verbose; then echo "  Preserving $year directory."; fi
+			fi
+		done <<< "$(find -E "$repo" -regex '.*/[0-9]{4}' -depth 1 | sort -nr)"
+		if $verbose; then echo -n "  "; fi
+	else
+		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
+		success=false
+	fi
+	
+	$success
+}
+
 function roll_repository_directories() {
 	local success=true
 	local repo="$1"
@@ -597,7 +630,7 @@ function roll_repository_directories() {
 			exit 1
 		fi
 		
-		# finally, we consolidate files in the monthly directories
+		# consolidate files in the monthly directories
 		if $success; then
 			for (( month=1; month<=12; month++ )); do
 				printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$month"
@@ -608,6 +641,16 @@ function roll_repository_directories() {
 						if $verbose; then echo "ERROR!"; fi
 					fi
 			done
+		fi
+		
+		# finally, delete any year directories older than we're supposed to keep
+		if $success; then
+			if $verbose; then echo -n "Purging year directories in '${repo}'... "; fi
+			if purge_year_directories "$repo"; then
+				if $verbose; then echo "Done."; fi
+			else
+				if $verbose; then echo "ERROR!"; fi
+			fi
 		fi
 	else
 		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
