@@ -316,3 +316,71 @@ it_does_move_files_outside_months_to_keep_dirs() {
 	
 	return $success
 }
+
+it_does_not_delete_directories_inside_years_to_keep_dirs() {
+	# set up the repository, incl. the previous years's directories and do `43f run`
+	./43f init tmp
+	for (( i=1; i<3; i++ )); do
+		y="$(( $(date +%Y) - $i ))"
+		mkdir "tmp/${y}"
+		for (( j=1; j<=12; j++ )); do
+			printf -v m "m%02i" $j
+			mkdir "tmp/${y}/${m}"
+		done
+		for (( j=1; j<=31; j++ )); do
+			printf -v d "d%02i" $j
+			mkdir "tmp/${y}/${d}"
+		done
+	done
+	./43f -c tmp/temp.conf run
+	
+	# they all should have been preserved
+	success=0
+	for (( i=0; i<3; i++ )); do
+		y="$(( $(date +%Y) - $i ))"
+		for (( j=1; j<=12; j++ )); do
+			printf -v m "m%02i" $j
+			if [ ! -d "tmp/${y}/${m}" ]; then success=1; fi
+		done
+		for (( j=1; j<=31; j++ )); do
+			printf -v d "d%02i" $j
+			if [ ! -d "tmp/${y}/${d}" ]; then success=1; fi
+		done
+	done
+	
+	return $success
+}
+
+it_does_delete_directories_outside_years_to_keep_dirs() {
+	# set up the repository, incl. the previous years's directories (beyond the years to keep) and do `43f run`
+	./43f init tmp
+	for (( i=1; i<6; i++ )); do
+		y="$(( $(date +%Y) - $i ))"
+		mkdir "tmp/${y}"
+		for (( j=1; j<=12; j++ )); do
+			printf -v m "m%02i" $j
+			mkdir "tmp/${y}/${m}"
+		done
+		for (( j=1; j<=31; j++ )); do
+			printf -v d "d%02i" $j
+			mkdir "tmp/${y}/${d}"
+		done
+	done
+	./43f -c tmp/temp.conf run
+	
+	# they all should have been preserved
+	success=0
+	for (( i=3; i<6; i++ )); do
+		y="$(( $(date +%Y) - $i ))"
+		for (( j=1; j<=12; j++ )); do
+			printf -v m "m%02i" $j
+			if [ -d "tmp/${y}/${m}" ]; then success=1; fi
+		done
+		for (( j=1; j<=31; j++ )); do
+			printf -v d "d%02i" $j
+			if [ -d "tmp/${y}/${d}" ]; then success=1; fi
+		done
+	done
+	
+	return $success
+}
