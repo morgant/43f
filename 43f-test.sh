@@ -384,3 +384,45 @@ it_does_delete_directories_outside_years_to_keep_dirs() {
 	
 	return $success
 }
+
+it_does_not_consolidate_files_with_different_names() {
+	# create files with different names in the same month directory and do `43f run`
+	./43f init tmp
+	y="$(date +%Y)"
+	printf -v m "m%02i" "$(date +%m)"
+	touch "tmp/${y}/${m}/test_file_1"
+	touch "tmp/${y}/${m}/some_other_test_file"
+	./43f -c tmp/temp.conf run
+	
+	# the test files should've stayed put
+	success=0
+	if [ ! -f "tmp/${y}/${m}/test_file_1" ]; then success=1; fi
+	if [ ! -f "tmp/${y}/${m}/some_other_test_file" ]; then success=1; fi
+	
+	return $success
+}
+
+it_does_consolidate_files_with_same_name_different_date() {
+	# create files with the same name but different date stamps in the same month directory and do `43f run`
+	./43f init tmp
+	y="$(date +%Y)"
+	m="$(date +%m)"
+	for (( i=5; i>0; i-- )); do
+		printf -v d "%02i" $i
+		touch "tmp/${y}/m${m}/some_test_file.${y}-${m}-${d}.tar.bz2"
+	done
+	./43f -c tmp/temp.conf run
+	
+	# only the test file with the newest date stamp should have remained, the others should've been deleted
+	success=0
+	for (( i=5; i>0; i-- )); do
+		printf -v d "%02i" $i
+		if [ $i -eq 5 ]; then
+			if [ ! -f "tmp/${y}/m${m}/some_test_file.${y}-${m}-${d}.tar.bz2" ]; then success=1; fi
+		else
+			if [ -f "tmp/${y}/m${m}/some_test_file.${y}-${m}-${d}.tar.bz2" ]; then success=1; fi
+		fi
+	done
+	
+	return $success
+}
