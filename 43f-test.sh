@@ -35,13 +35,13 @@ it_displays_usage() {
 }
 
 it_fails_initialze_repository_with_no_path() {
-	out="$(./43f init | head -n 1)"
+	out="$(./43f -N init | head -n 1)"
 	test "$out" = "ERROR! Cannot initialize repository with empty path!"
 }
 
 it_initializes_repository() {
 	success=0
-	if ./43f init tmp; then
+	if ./43f -N init tmp; then
 		# was the year directory created?
 		y="$(date +%Y)"
 		if [ ! -d "tmp/$y" ]; then success=1; fi
@@ -62,43 +62,43 @@ it_initializes_repository() {
 }
 
 it_passes_config_test_with_valid_config() {
-	out="$(./43f -c tmp/temp.conf -t | head -n 1)"
+	out="$(./43f -N -c tmp/temp.conf -t | head -n 1)"
 	test "$out" = "Config file 'tmp/temp.conf' loaded & tested successfully."
 }
 
 it_fails_config_test_with_invalid_repository() {
 	cat tmp/temp.conf | sed -E 's/^repository=.+$/repository=tmp\/nonexistent/' > tmp/invalid.conf
-	out="$(./43f -c tmp/invalid.conf -t | head -n 1)"
+	out="$(./43f -N -c tmp/invalid.conf -t | head -n 1)"
 	test "$out" = "  ERROR! 'repository' value in config file is either invalid or not a directory! You may need to run '43f init' to initialize the repository."
 }
 
 it_fails_config_test_with_invalid_notify() {
 	cat tmp/temp.conf | sed -E 's/^notify=.+$/notify=morgan@smalldogcom/' > tmp/invalid.conf
-	out="$(./43f -c tmp/invalid.conf -t | head -n 1)"
+	out="$(./43f -N -c tmp/invalid.conf -t | head -n 1)"
 	test "$out" = "  ERROR! 'notify' value in config file is not a valid email address!"
 }
 
 it_fails_config_test_with_invalid_days() {
 	cat tmp/temp.conf | sed -E 's/^days=.+$/days=32/' > tmp/invalid.conf
-	out="$(./43f -c tmp/invalid.conf -t | head -n 1)"
+	out="$(./43f -N -c tmp/invalid.conf -t | head -n 1)"
 	test "$out" = "  ERROR! 'days' value in config file is out of range (1-31)!"
 }
 
 it_fails_config_test_with_invalid_months() {
 	cat tmp/temp.conf | sed -E 's/^months=.+$/months=13/' > tmp/invalid.conf
-	out="$(./43f -c tmp/invalid.conf -t | head -n 1)"
+	out="$(./43f -N -c tmp/invalid.conf -t | head -n 1)"
 	test "$out" = "  ERROR! 'months' value in config file is out of range (1-12)!"
 }
 
 it_fails_config_test_with_invalid_years() {
 	cat tmp/temp.conf | sed -E 's/^years=.+$/years=0/' > tmp/invalid.conf
-	out="$(./43f -c tmp/invalid.conf -t | head -n 1)"
+	out="$(./43f -N -c tmp/invalid.conf -t | head -n 1)"
 	test "$out" = "  ERROR! 'years' value in config file is out of range (1+)!"
 }
 
 it_fails_config_test_with_invalid_datestamp() {
 	cat tmp/temp.conf | sed -E 's/^datestamp=.+$/datestamp=Z/' > tmp/invalid.conf
-	out="$(./43f -c tmp/invalid.conf -t | head -n 1)"
+	out="$(./43f -N -c tmp/invalid.conf -t | head -n 1)"
 	test "$out" = "  ERROR! 'datestamp' value in config file is out of range!"
 }
 
@@ -107,9 +107,9 @@ it_does_not_move_files_modified_today_from_todays_dir() {
 	printf -v d "d%02i" "$(date +%d)"
 	
 	# create a file in today's directory (leaving creation/modification time set to today) and do `43f run`
-	./43f init tmp
+	./43f -N init tmp
 	touch "tmp/${y}/${d}/test_file"
-	./43f -c tmp/temp.conf run
+	./43f -N -c tmp/temp.conf run
 	
 	# it should've stayed put in today's directory
 	test -f "tmp/${y}/${d}/test_file"
@@ -120,9 +120,9 @@ it_does_move_files_modified_last_month_from_todays_dir() {
 	printf -v d "d%02i" "$(date +%d)"
 	
 	# create a file in today's directory (setting the creation/modification time to last month) and do `43f run`
-	./43f init tmp
+	./43f -N init tmp
 	touch -t "$(date -v-1m +%Y%m%d%H%M.%S)" "tmp/${y}/${d}/test_file"
-	./43f -c tmp/temp.conf run
+	./43f -N -c tmp/temp.conf run
 	
 	# it should've been moved to last month's directory
 	printf -v m "m%02i" "$(date -v-1m +%m)"
@@ -131,7 +131,7 @@ it_does_move_files_modified_last_month_from_todays_dir() {
 
 it_does_not_move_files_within_days_to_keep_dirs() {
 	# create files in all the "to keep" day dirs and do `43f run`
-	./43f init tmp
+	./43f -N init tmp
 	today="$(date +%d)"
 	for (( i=0; i<7; i++ )); do
 		y="$(date +%Y)"
@@ -145,7 +145,7 @@ it_does_not_move_files_within_days_to_keep_dirs() {
 		fi
 		touch "tmp/${y}/${d}/${d}_test_file"
 	done
-	./43f -c tmp/temp.conf run
+	./43f -N -c tmp/temp.conf run
 	
 	# they all should've stayed put in the "to keep" day dirs
 	success=0
@@ -167,7 +167,7 @@ it_does_not_move_files_within_days_to_keep_dirs() {
 
 it_does_move_files_outside_days_to_keep_dirs() {
 	# create files in all the directories except the "to keep" day dirs and do `43f run`
-	./43f init tmp
+	./43f -N init tmp
 	today="$(date +%d)"
 	for (( i=7; i<31; i++ )); do
 		y="$(date +%Y)"
@@ -181,7 +181,7 @@ it_does_move_files_outside_days_to_keep_dirs() {
 		fi
 		touch "tmp/${y}/${d}/${d}_test_file"
 	done
-	./43f -c tmp/temp.conf run
+	./43f -N -c tmp/temp.conf run
 	
 	# they all should've been moved to the appropriate month dirs
 	success=0
@@ -207,7 +207,7 @@ it_does_move_files_outside_days_to_keep_dirs() {
 
 it_does_not_move_files_inside_months_to_keep_dirs() {
 	# set up the repository, incl. the previous year's directories
-	./43f init tmp
+	./43f -N init tmp
 	y="$(date +%Y)"
 	prev_year="$(( $y - 1 ))"
 	mkdir "tmp/${prev_year}"
@@ -234,7 +234,7 @@ it_does_not_move_files_inside_months_to_keep_dirs() {
 			touch "tmp/${y}/${m}/${m}_test_file"
 		fi
 	done
-	./43f -c tmp/temp.conf run
+	./43f -N -c tmp/temp.conf run
 	
 	# they all should have stayed put in the "to keep" month dirs
 	success=0
@@ -256,7 +256,7 @@ it_does_not_move_files_inside_months_to_keep_dirs() {
 
 it_does_move_files_outside_months_to_keep_dirs() {
 	# set up the repository, incl. the previous year's directories
-	./43f init tmp
+	./43f -N init tmp
 	y="$(date +%Y)"
 	prev_year="$(( $y - 1 ))"
 	mkdir "tmp/${prev_year}"
@@ -283,7 +283,7 @@ it_does_move_files_outside_months_to_keep_dirs() {
 			touch "tmp/${y}/${m}/${m}_test_file"
 		fi
 	done
-	./43f -c tmp/temp.conf run
+	./43f -N -c tmp/temp.conf run
 	
 	# determine the "to keep" month & year
 	keep_year="$(date +%Y)"
@@ -319,7 +319,7 @@ it_does_move_files_outside_months_to_keep_dirs() {
 
 it_does_not_delete_directories_inside_years_to_keep_dirs() {
 	# set up the repository, incl. the previous years's directories and do `43f run`
-	./43f init tmp
+	./43f -N init tmp
 	for (( i=1; i<3; i++ )); do
 		y="$(( $(date +%Y) - $i ))"
 		mkdir "tmp/${y}"
@@ -332,7 +332,7 @@ it_does_not_delete_directories_inside_years_to_keep_dirs() {
 			mkdir "tmp/${y}/${d}"
 		done
 	done
-	./43f -c tmp/temp.conf run
+	./43f -N -c tmp/temp.conf run
 	
 	# they all should have been preserved
 	success=0
@@ -353,7 +353,7 @@ it_does_not_delete_directories_inside_years_to_keep_dirs() {
 
 it_does_delete_directories_outside_years_to_keep_dirs() {
 	# set up the repository, incl. the previous years's directories (beyond the years to keep) and do `43f run`
-	./43f init tmp
+	./43f -N init tmp
 	for (( i=1; i<6; i++ )); do
 		y="$(( $(date +%Y) - $i ))"
 		mkdir "tmp/${y}"
@@ -366,7 +366,7 @@ it_does_delete_directories_outside_years_to_keep_dirs() {
 			mkdir "tmp/${y}/${d}"
 		done
 	done
-	./43f -c tmp/temp.conf run
+	./43f -N -c tmp/temp.conf run
 	
 	# they all should have been preserved
 	success=0
@@ -387,12 +387,12 @@ it_does_delete_directories_outside_years_to_keep_dirs() {
 
 it_does_not_consolidate_files_with_different_names() {
 	# create files with different names in the same month directory and do `43f run`
-	./43f init tmp
+	./43f -N init tmp
 	y="$(date +%Y)"
 	printf -v m "m%02i" "$(date +%m)"
 	touch "tmp/${y}/${m}/test_file_1"
 	touch "tmp/${y}/${m}/some_other_test_file"
-	./43f -c tmp/temp.conf run
+	./43f -N -c tmp/temp.conf run
 	
 	# the test files should've stayed put
 	success=0
@@ -404,14 +404,14 @@ it_does_not_consolidate_files_with_different_names() {
 
 it_does_consolidate_files_with_same_name_different_date() {
 	# create files with the same name but different date stamps in the same month directory and do `43f run`
-	./43f init tmp
+	./43f -N init tmp
 	y="$(date +%Y)"
 	m="$(date +%m)"
 	for (( i=5; i>0; i-- )); do
 		printf -v d "%02i" $i
 		touch "tmp/${y}/m${m}/some_test_file.${y}-${m}-${d}.tar.bz2"
 	done
-	./43f -c tmp/temp.conf run
+	./43f -N -c tmp/temp.conf run
 	
 	# only the test file with the newest date stamp should have remained, the others should've been deleted
 	success=0
