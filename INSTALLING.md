@@ -66,8 +66,8 @@ configuration file with the `-c` option, for example:
     /usr/local/bin/43f -c /path/to/config/43f.conf run
 
 Please note that, if using `launchd`, the `launchd.plist` syntax requires that 
-each argument be specified in a different string in the `ProgramArguments` key, 
-so:
+each argument be specified in a different string in the `ProgramArguments` 
+dictionary, so:
 
     <key>ProgramArguments</key>
     <array> 

@@ -17,7 +17,44 @@ of uses.
 USAGE
 -----
 
-Run `43f -h` or `43f --help` for usage instructions.
+`43f` is intended to be fairly transparent in it's functionality, so once 
+installed & configured (see [INSTALLING `43f`](INSTALLING.md) for details),
+you need only move files into various day or month directories within your
+`43f` repository. `43f` will then manage the storage nightly.
+
+The basic directory structure will be something like the following (not in
+alphabetical order for greater clarity):
+
+    43f/
+    |-- 2013/
+    |   |-- d01/
+    |   |-- d02/
+    |   |-- ...
+    |   |-- d30/
+    |   |-- d31/
+    |   |-- m01/
+    |   |-- m02/
+    |   |-- ...
+    |   |-- m11/
+    |   `-- m12/
+    |-- today/
+    |-- yesterday/
+    |-- sunday/
+    |-- monday/
+    |-- tuesday/
+    |-- wednesday/
+    |-- thursday/
+    |-- friday/
+    `-- saturday/
+
+So, you can move (esp. useful when automated) any files into a particular 
+day or month directory (even better, use the `today`, `yesterday`, or 
+`sunday` through `monday` symlinks, when convenient) and `43f` will 
+preserve those within X days, Y months, and Z years worth (as specified
+in the configuration file). You can always run `43f stats` for disk usage 
+details.
+
+Run `43f -h` or `43f --help` for further usage instructions.
 
 TO-DO
 -----
