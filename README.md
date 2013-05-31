@@ -14,11 +14,15 @@ monthly file sets, and as many annual file sets as you would like. It is ideal
 for managing backup/snapshot sets, but should be flexible enough for any number 
 of uses.
 
+**NOTE:** `43f` is a destructive utility (it is designed to manage--and
+therefore delete--files), so please proceed with caution, have a backup, 
+run the unit tests, and test thoroughly before deploying!
+
 USAGE
 -----
 
 `43f` is intended to be fairly transparent in it's functionality, so once 
-installed & configured (see [INSTALLING `43f`](INSTALLING.md) for details),
+installed & configured (see [INSTALLING 43f](INSTALLING.md) for details),
 you need only move files into various day or month directories within your
 `43f` repository. `43f` will then manage the storage nightly.
 
