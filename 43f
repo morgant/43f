@@ -16,7 +16,7 @@
 # 
 # LICENSE:
 # 
-# Copyright (c) 2012, Morgan Aldridge. All rights reserved.
+# Copyright (c) 2009-2013, Morgan Aldridge. All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without 
 # modification, are permitted provided that the following conditions are met:
@@ -42,7 +42,7 @@
 # info
 tool=$(basename "$0")
 version='0.1'
-copyright='Copyright (c) 2009-2012 Morgan Aldridge'
+copyright='Copyright (c) 2009-2013 Morgan Aldridge'
 
 # global variables
 verbose=false

@@ -17,7 +17,20 @@ of uses.
 USAGE
 -----
 
-_TBD_
+Run `43f -h` or `43f --help` for usage instructions.
+
+TO-DO
+-----
+
+[ ] Example `launchd.plist` for performing nightly `43f run`
+[ ] Add logging to `syslog` and/or a file
+[ ] Switch from a config file to a hidden .43f directory and .43f/config file
+      within the repository (like many VCS/SCM implementations use)
+
+CHANGE LOG
+----------
+
+v0.1 - Initial release.
 
 ACKNOWLEDGEMENTS
 ----------------
@@ -39,7 +52,7 @@ Unit tests are implemented using (roundup)[https://github.com/bmizerany/roundup]
 LICENSE
 -------
 
-Copyright (c) 2012, Morgan Aldridge. All rights reserved.
+Copyright (c) 2009-2013, Morgan Aldridge. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without 
 modification, are permitted provided that the following conditions are met:
