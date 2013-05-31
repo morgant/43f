@@ -22,10 +22,10 @@ Run `43f -h` or `43f --help` for usage instructions.
 TO-DO
 -----
 
-[ ] Example `launchd.plist` for performing nightly `43f run`
-[ ] Add logging to `syslog` and/or a file
-[ ] Switch from a config file to a hidden .43f directory and .43f/config file
-      within the repository (like many VCS/SCM implementations use)
+    [ ] Example `launchd.plist` for performing nightly `43f run`
+    [ ] Add logging to `syslog` and/or a file
+    [ ] Switch from a config file to a hidden .43f directory and .43f/config
+         file within the repository (like many VCS/SCM implementations use)
 
 CHANGE LOG
 ----------
@@ -37,17 +37,17 @@ ACKNOWLEDGEMENTS
 
 Naturally, I wouldn't have envisioned this without David Allen's "Getting Things
 Done" program (books & CDs) or the GTD craze sparked in the mid-2000's and
-further fueled by the likes of (Merlin Mann)[http://43folders.com/].
+further fueled by the likes of [Merlin Mann](http://43folders.com/).
 
 The concept and some very early code was collecting dust in a proverbial pile 
-on my hard drive until (Small Dog Electronics)[http://www.smalldog.com/] 
+on my hard drive until [Small Dog Electronics](http://www.smalldog.com/) 
 agreed to sponsor further development for internal use. It may never have seen
 the light of day otherwise.
 
 Development and troubleshooting was _greatly_ simplified by the use of Rocky 
-Bernstein's (`bashdb`)[http://bashdb.sourceforge.net/] debugger for `bash`.
+Bernstein's [`bashdb`](http://bashdb.sourceforge.net/) debugger for `bash`.
 
-Unit tests are implemented using (roundup)[https://github.com/bmizerany/roundup].
+Unit tests are implemented using [`roundup`](https://github.com/bmizerany/roundup).
 
 LICENSE
 -------
