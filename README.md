@@ -22,10 +22,10 @@ Run `43f -h` or `43f --help` for usage instructions.
 TO-DO
 -----
 
-    [ ] Example `launchd.plist` for performing nightly `43f run`
     [ ] Add logging to `syslog` and/or a file
     [ ] Switch from a config file to a hidden .43f directory and .43f/config
          file within the repository (like many VCS/SCM implementations use)
+    [ ] Smart advance notifications based on disk usage rates gleaned from stats
 
 CHANGE LOG
 ----------
