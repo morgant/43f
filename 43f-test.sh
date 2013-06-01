@@ -61,6 +61,28 @@ it_initializes_repository() {
 	return $success;
 }
 
+it_initializes_repository_with_spaces_in_path() {
+	success=0
+	if ./43f -N init "tmp/repo with spaces"; then
+		# was the year directory created?
+		y="$(date +%Y)"
+		if [ ! -d "tmp/repo with spaces/$y" ]; then success=1; fi
+		# were the month directories created?
+		for (( i=1; i<=12; i++ )); do
+			printf -v m "%02i" "$i"
+			if [ ! -d "tmp/repo with spaces/${y}/m${m}" ]; then success=1; fi
+		done
+		# were the day directories created?
+		for (( i=1; i<=31; i++ )); do
+			printf -v d "%02i" "$i"
+			if [ ! -d "tmp/repo with spaces/${y}/d${d}" ]; then success=1; fi
+		done
+	else
+		success=1
+	fi
+	return $success;
+}
+
 it_passes_config_test_with_valid_config() {
 	out="$(./43f -N -c tmp/temp.conf -t | head -n 1)"
 	test "$out" = "Config file 'tmp/temp.conf' loaded & tested successfully."
