@@ -309,7 +309,7 @@ function init_repository() {
 			if $verbose; then echo 'exists.'; fi
 		else
 			if $verbose ; then echo -n 'does not exist. Creating... '; fi
-			if $dry_run || mkdir -p $repo; then
+			if $dry_run || mkdir -p "$repo"; then
 				if $verbose; then echo 'Done.'; fi
 			else
 				if $verbose; then echo 'Error!'; fi
@@ -333,7 +333,7 @@ function init_repository() {
 			if $verbose; then
 				printf "does not exist. Creating... "
 			fi
-			if $dry_run || mkdir $year_dir ; then
+			if $dry_run || mkdir "$year_dir" ; then
 				if $verbose ; then
 					printf "Done.\n"
 				fi
@@ -360,7 +360,7 @@ function init_repository() {
 			else
 				# create the month directory
 				if $verbose; then echo -n "does not exist. Creating... "; fi
-				if $dry_run || mkdir $month_dir; then
+				if $dry_run || mkdir "$month_dir"; then
 					if $verbose; then echo "Done."; fi
 				else
 					if $verbose; then echo "ERROR!"; fi
@@ -384,7 +384,7 @@ function init_repository() {
 		      else
 		      	# create the day directory
 		      	if $verbose; then echo -n "does not exist. Creating... "; fi
-		      	if $dry_run || mkdir $day_dir; then
+		      	if $dry_run || mkdir "$day_dir"; then
 		      		if $verbose; then echo "Done."; fi	
 		      	else
 		      		if $verbose; then echo "ERROR!"; fi
