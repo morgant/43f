@@ -13,6 +13,8 @@
 # 
 # v0.1   - 2009-03-07 - Morgan Aldridge <morgant@makkintosshu.com>
 #                       Initial development.
+# v0.1.1 - 2013-06-05 - Morgan Aldridge
+#                       Added optional year parameter to 'init' command.
 # 
 # LICENSE:
 # 
@@ -41,7 +43,7 @@
 
 # info
 tool=$(basename "$0")
-version='0.1'
+version='0.1.1'
 copyright='Copyright (c) 2009-2013 Morgan Aldridge'
 
 # global variables
@@ -65,32 +67,32 @@ function usage() {
 	echo "Usage: $tool [-h|-t|-V] [-v] [-c file] COMMAND"
 	echo
 	echo 'Options:'
-	echo '  -v                : verbose output'
-	echo '  -V, --version     : print the version number and exit'
-	echo '  -h, --help        : print these usage instructions and exit'
-	echo '  -c, --config=file : specify an alternate config file'
-	echo '             DEFAULT: /usr/local/etc/43f.conf'
-	echo '  -t                : check the config file and exit'
-	echo "  -n, --dry-run     : don't actually move/delete any files"
-	echo '  -N, --no-notify   : disable email notifications'
+	echo '  -v                   : verbose output'
+	echo '  -V, --version        : print the version number and exit'
+	echo '  -h, --help           : print these usage instructions and exit'
+	echo '  -c, --config=file    : specify an alternate config file'
+	echo '                DEFAULT: /usr/local/etc/43f.conf'
+	echo '  -t                   : check the config file and exit'
+	echo "  -n, --dry-run        : don't actually move/delete any files"
+	echo '  -N, --no-notify      : disable email notifications'
 	echo
 	echo 'Commands:'
-	echo '  init <path>       : initialize specified repository'
-	echo '  run               : perform storage management'
-	echo '  stats             : print repository stats'
+	echo '  init <path> [<year>] : initialize specified repository'
+	echo '  run                  : perform storage management'
+	echo '  stats                : print repository stats'
 	echo
 	echo 'Config File Options:'
-	echo '  repository        : absolute path to archive repository'
-	echo '             DEFAULT: /usr/local/var/db/43f'
-	echo '  notify            : email address(es) to send notifications to'
-	echo '             DEFAULT: root'
-	echo '  days              : number of daily file sets to preserve (1-31)'
-	echo '             DEFAULT: 31'
-	echo '  months            : number of monthly file sets to preserve (1-12)'
-	echo '             DEFAULT: 12'
-	echo '  years             : number of annual file sets to preserve (1+)'
-	echo '             DEFAULT: 10'
-}
+	echo '  repository           : absolute path to archive repository'
+	echo '                DEFAULT: /usr/local/var/db/43f'
+	echo '  notify               : email address(es) to send notifications to'
+	echo '                DEFAULT: root'
+	echo '  days                 : number of daily file sets to preserve (1-31)'
+	echo '                DEFAULT: 31'
+	echo '  months               : number of monthly file sets to preserve (1-12)'
+	echo '                DEFAULT: 12'
+	echo '  years                : number of annual file sets to preserve (1+)'
+	echo '                DEFAULT: 10'
+}						  
 
 # print version info
 function version() {
@@ -293,17 +295,26 @@ function compare_date_stamped_filenames() {
 
 # initialize the repository
 function init_repository() {
-	local success
-	local repo
-	success=true
-	repo="$1"
+	local success=true
+	local repo="$1"
+	local year="$2"
+	
+	# default to this year (if one wasn't specified)
+	if [ -z "$year" ]; then
+		year="$y"
+	# otherwise, validate the year input
+	elif [[ ! "$year" =~ ^[0-9]{4}$ ]]; then
+		echo "ERROR! Cannot initialize repository with invalid year '$year'!"
+		notify "UNKNOWN" "ERROR" "Cannot initialize repository with invalid year '$year'!"
+		success=false
+	fi
 	
 	# does the repository exist?
 	if [ -z "$repo" ]; then
 		echo 'ERROR! Cannot initialize repository with empty path!'
 		notify "UNKNOWN" "ERROR" "Cannot initialize repository with empty path!"
 		success=false
-	else
+	elif $success; then
 		if $verbose; then echo -n "Repository directory '$repo' "; fi
 		if does_repository_exist "$repo"; then
 			if $verbose; then echo 'exists.'; fi
@@ -321,7 +332,7 @@ function init_repository() {
 		
 	# check for year subdirectory & create if necessary
 	if $success; then
-		year_dir="$repo/$y"
+		year_dir="$repo/$year"
 		if $verbose ; then
 			printf "Year Directory '%s' " "$year_dir"
 		fi
@@ -353,7 +364,7 @@ function init_repository() {
 		for (( month=1; month<=12; month++ )); do
 			local month_dir
 			# check for month directory
-			printf -v month_dir "%s/%s/m%02d" "$repo" "$y" "$month"
+			printf -v month_dir "%s/%s/m%02d" "$repo" "$year" "$month"
 			if $verbose; then echo -n "Month Directory ${month_dir} "; fi
 			if [ -d "$month_dir" ]; then
 				if $verbose; then echo "exists."; fi
@@ -377,7 +388,7 @@ function init_repository() {
 		for (( day=1; day<=31; day++ )); do
 		      local day_dir
 		      # check for the day directory
-		      printf -v day_dir "%s/%s/d%02d" "$repo" "$y" "$day"
+		      printf -v day_dir "%s/%s/d%02d" "$repo" "$year" "$day"
 		      if $verbose; then echo -n "Day Directory ${day_dir} "; fi
 		      if [ -d "$day_dir" ]; then
 		      	if $verbose; then echo "exists."; fi
@@ -1296,8 +1307,10 @@ if [ $# -gt 0 ]; then
 				init)
 					((i++))
 					repository_dir="${argv[$i]}"
+					((i++))
+					repository_year="${argv[$i]}"
 					# check/create repository directories
-					if init_repository "$repository_dir"; then
+					if init_repository "$repository_dir" "$repository_year"; then
 					      if $verbose; then echo 'Repository directories found/created successfully.'; fi
 					else
 					      echo "ERROR! An error occurred while checking or creating the repository directories in '${repository_dir}'!"

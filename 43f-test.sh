@@ -83,6 +83,33 @@ it_initializes_repository_with_spaces_in_path() {
 	return $success;
 }
 
+it_fails_initialze_repository_with_invalid_year() {
+	out="$(./43f -N init tmp qwerty | head -n 1)"
+	test "$out" = "ERROR! Cannot initialize repository with invalid year 'qwerty'!"
+}
+
+it_initializes_repository_with_year() {
+	success=0
+	if ./43f -N init tmp 2012; then
+		# was the year directory created?
+		y=2012
+		if [ ! -d "tmp/$y" ]; then success=1; fi
+		# were the month directories created?
+		for (( i=1; i<=12; i++ )); do
+			printf -v m "%02i" "$i"
+			if [ ! -d "tmp/${y}/m${m}" ]; then success=1; fi
+		done
+		# were the day directories created?
+		for (( i=1; i<=31; i++ )); do
+			printf -v d "%02i" "$i"
+			if [ ! -d "tmp/${y}/d${d}" ]; then success=1; fi
+		done
+	else
+		success=1
+	fi
+	return $success;
+}
+
 it_passes_config_test_with_valid_config() {
 	out="$(./43f -N -c tmp/temp.conf -t | head -n 1)"
 	test "$out" = "Config file 'tmp/temp.conf' loaded & tested successfully."

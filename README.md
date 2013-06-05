@@ -63,7 +63,6 @@ Run `43f -h` or `43f --help` for further usage instructions.
 TO-DO
 -----
 
-	[ ] Add additional optional year parameter to `43f init` & unit tests
     [ ] Add logging to `syslog` and/or a file
     [ ] Switch from a config file to a hidden .43f directory and .43f/config
          file within the repository (like many VCS/SCM implementations use)
@@ -72,7 +71,8 @@ TO-DO
 CHANGE LOG
 ----------
 
-v0.1 - Initial release.
+v0.1   - Initial release.
+v0.1.1 - Added optional year parameter to `init` command.
 
 ACKNOWLEDGEMENTS
 ----------------
