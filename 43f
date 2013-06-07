@@ -631,7 +631,7 @@ function roll_repository_directories() {
 		local day=$(date -v-1d +%d)
 		local day_dir=''
 		local month_dir=''
-		while (( "$day" != "$today" )); do
+		while (( 10#$day != 10#$today )); do
 			# build the directory paths
 			printf -v day_dir "%s/%d/d%02d" "$repo" "$year" "$day"
 			printf -v month_dir "%s/%d/m%02d" "$repo" "$year" $(( 10#$month ))
@@ -672,6 +672,13 @@ function roll_repository_directories() {
 		done
 		
 		# we always process today (but we have to be extra careful since there's the possibility new files have already been stashed in it)
+		if (( ( $year == $y ) && ( 10#$month == 10#$m ) )); then
+			month=$(( 10#$month - 1 ));
+			if (( 10#$month < 1 )); then
+				month=12
+				(( year-- ))
+			fi
+		fi
 		printf -v day_dir "%s/%d/d%02d" "$repo" "$year" "$day"
 		printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$month"
 		if $verbose; then echo -n "Processing directory '$day_dir'... "$'\n'"  Processing (special)... "; fi
