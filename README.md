@@ -72,7 +72,8 @@ CHANGE LOG
 ----------
 
 v0.1   - Initial release.
-v0.1.1 - Added optional year parameter to `init` command.
+v0.1.1 - Added optional year parameter to `init` command. Fixed bug causing old
+         files to be moved to incorrect month folder on the 1st day of a month.
 
 ACKNOWLEDGEMENTS
 ----------------
