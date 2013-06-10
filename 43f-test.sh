@@ -220,10 +220,10 @@ it_does_move_files_outside_days_to_keep_dirs() {
 	today="$(date +%d)"
 	for (( i=7; i<31; i++ )); do
 		y="$(date +%Y)"
-		if (( ( $today - $i ) > 0 )); then
-			printf -v d "d%02i" $(( $today - $i ))
+		if (( ( 10#$today - $i ) > 0 )); then
+			printf -v d "d%02i" $(( 10#$today - $i ))
 		else
-			printf -v d "d%02i" $(( 31 - ( $i - $today ) ))
+			printf -v d "d%02i" $(( 31 - ( $i - 10#$today ) ))
 			if [ "$(date +%m)" -eq 1 ]; then
 				y="$(( $y - 1 ))"
 			fi
@@ -237,12 +237,12 @@ it_does_move_files_outside_days_to_keep_dirs() {
 	for (( i=7; i<31; i++ )); do
 		y="$(date +%Y)"
 		m="$(date +%m)"
-		if (( ( $today - $i ) > 0 )); then
-			printf -v d "d%02i" $(( $today - $i ))
+		if (( ( 10#$today - $i ) > 0 )); then
+			printf -v d "d%02i" $(( 10#$today - $i ))
 		else
-			printf -v d "d%02i" $(( 31 - ( $i - $today ) ))
-			m="$(( $m - 1))"
-			if [ "$m" -lt 1 ]; then
+			printf -v d "d%02i" $(( 31 - ( $i - 10#$today ) ))
+			m="$(( 10#$m - 1))"
+			if (( 10#$m < 1 )); then
 				y="$(( $y - 1 ))"
 				m=12
 			fi

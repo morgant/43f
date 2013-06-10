@@ -626,8 +626,8 @@ function roll_repository_directories() {
 		if $verbose; then echo "Keeping files through 'd${keep_through}'."; fi
 		
 		# step through the subdirectories and "process" those that are outside the range to preserve (starting with yesterday)
-		local year="$y"
-		local month="$m"
+		local year=$(date -v-1d +%Y)
+		local month=$(date -v-1d +%m)
 		local day=$(date -v-1d +%d)
 		local day_dir=''
 		local month_dir=''
