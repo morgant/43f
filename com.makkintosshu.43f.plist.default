@@ -9,12 +9,6 @@
 			<string>/usr/local/bin/43f</string>
 			<string>run</string>
 		</array>
-		<key>RunAtLoad</key>
-		<false />
-		<key>OnDemand</key>
-		<false />
-		<key>KeepAlive</key>
-		<false />
 		<key>StartCalendarInterval</key>
 		<dict>
 			<key>Hour</key>
