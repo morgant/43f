@@ -99,6 +99,61 @@ function version() {
 	echo "$tool v$version $copyright"
 }
 
+# find using extended regular expressions
+function Efind() {
+	local path="$1"
+	shift
+	case "$(uname)" in
+		Darwin)
+			find -E "$path" ${@}
+			;;
+		Linux)
+			find "$path" -regextype posix-extended "$@"
+			;;
+	esac
+}
+
+# calculate relative dates
+function reldate() {
+	local adjust="$1"
+	local format="$2"
+	
+	case "$(uname)" in
+		Darwin)
+			date -v"${adjust}" "$format"
+			;;
+		Linux)
+			# convert BSD style adjustment to GNU style string
+			if [[ "$adjust" =~ ^([+-]?[0-9]+)([ymwdHMS])$ ]]; then
+				case "${BASH_REMATCH[2]}" in
+					y)
+						adjust="${BASH_REMATCH[1]} years"
+						;;
+					m)
+						adjust="${BASH_REMATCH[1]} months"
+						;;
+					w)
+						adjust="${BASH_REMATCH[1]} weeks"
+						;;
+					d)
+						adjust="${BASH_REMATCH[1]} days"
+						;;
+					H)
+						adjust="${BASH_REMATCH[1]} hours"
+						;;
+					M)
+						adjust="${BASH_REMATCH[1]} minutes"
+						;;
+					S)
+						adjust="${BASH_REMATCH[1]} seconds"
+						;;
+				esac
+			fi
+			date -d "$adjust" "$format"
+			;;
+	esac
+}
+
 # notify of errors/warnings via email
 function notify() {
 	local repo="$1"
@@ -188,7 +243,7 @@ function load_config() {
 					fi
 					;;
 				datestamp)
-						if [[ "$val" =~ ^[%-.YmdHMS]+$ ]]; then
+						if [[ "$val" =~ ^[YmdHMS%.-]+$ ]]; then
 							config_date_format="$val"
 							if $verbose; then echo "  '$var' set to '$config_date_format'."; fi
 						else
@@ -422,7 +477,7 @@ function init_repository_symlinks() {
 		today="$d"
 		today_dir="$repo/$y/d${today}"
 		if $verbose; then echo -n "Creating symlink for 'today' pointing to '$today_dir'... "; fi
-		if ln -f -h -s "$today_dir" "$repo/today"; then
+		if ln -f -n -s "$today_dir" "$repo/today"; then
 			if $verbose; then echo 'Done.'; fi
 		else
 			if $verbose; then echo 'ERROR!'; fi
@@ -433,10 +488,10 @@ function init_repository_symlinks() {
 		# create symlink for 'yesterday'
 		local yesterday_dir
 		local yesterday
-		yesterday=$(date -v-1d +%d)
+		yesterday=$(reldate -1d +%d)
 		yesterday_dir="$repo/$y/d${yesterday}"
 		if $verbose; then echo -n "Creating symlink for 'yesterday' pointing to '$yesterday_dir'... "; fi
-		if ln -f -h -s "$yesterday_dir" "$repo/yesterday"; then
+		if ln -f -n -s "$yesterday_dir" "$repo/yesterday"; then
 			if $verbose; then echo 'Done.'; fi
 		else
 			if $verbose; then echo 'ERROR!'; fi
@@ -449,11 +504,11 @@ function init_repository_symlinks() {
 		local weekday_name
 		local weekday
 		for (( i=1; i<=7; i++ )); do
-			weekday=$(date -v-${i}d +%d)
+			weekday=$(reldate -${i}d +%d)
 			weekday_dir="$repo/$y/d${weekday}"
-			weekday_name=$(date -v-${i}d +%A | tr '[:upper:]' '[:lower:]')
+			weekday_name=$(reldate -${i}d +%A | tr '[:upper:]' '[:lower:]')
 			if $verbose; then echo -n "Creating symlink for '$weekday_name' pointing to '$weekday_dir'... "; fi
-			if ln -f -h -s "$weekday_dir" "$repo/$weekday_name"; then
+			if ln -f -n -s "$weekday_dir" "$repo/$weekday_name"; then
 				if $verbose; then echo 'Done.'; fi
 			else
 				if $verbose; then echo 'ERROR!'; fi
@@ -506,7 +561,7 @@ function roll_repository_daily_to_monthly() {
 				    success=false
 				fi
 			fi
-		done <<< "$(find -s "$src" -depth 1 $mtime)"
+		done <<< "$(find "$src"  -mindepth 1 -maxdepth 1 $mtime| sort)"
 		
 		
 		if $verbose; then echo "Done."; fi
@@ -570,7 +625,7 @@ function consolidate_repository_monthly() {
 				# store this filename to compare with the next one
 				last_file="$line"
 			fi
-		done <<< "$(find -s "$dir" -depth 1)" 
+		done <<< "$(find "$dir" -mindepth 1 -maxdepth 1 | sort)" 
 	else
 		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
 		notify "$repo" "ERROR" "The '${repo}' repository doesn't exist!"
@@ -587,7 +642,7 @@ function purge_year_directories() {
 	if does_repository_exist "$repo"; then
 		if $verbose; then echo; fi
 		# calculate keep-through year
-		local keep_through=$(date -v-$(( ${config_keep_years} - 1 ))y +%Y)
+		local keep_through=$(reldate -$(( ${config_keep_years} - 1 ))y +%Y)
 		
 		# step through all the year directories that exist and delete any that are older than our "keep through" year
 		while IFS= read -r line; do
@@ -604,7 +659,7 @@ function purge_year_directories() {
 			else
 				if $verbose; then echo "  Preserving $year directory."; fi
 			fi
-		done <<< "$(find -E "$repo" -regex '.*/[0-9]{4}' -depth 1 | sort -nr)"
+		done <<< "$(Efind "$repo" -mindepth 1 -maxdepth 1 -regex '.*/[0-9]{4}' | sort -nr)"
 		if $verbose; then echo -n "  "; fi
 	else
 		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
@@ -622,13 +677,13 @@ function roll_repository_directories() {
 	if does_repository_exist "$repo"; then
 		# calculate today & keep-through dates
 		local today="$d"
-		local keep_through=$(date -v-$((${config_keep_days} - 1 ))d +%d)
+		local keep_through=$(reldate -$((${config_keep_days} - 1 ))d +%d)
 		if $verbose; then echo "Keeping files through 'd${keep_through}'."; fi
 		
 		# step through the subdirectories and "process" those that are outside the range to preserve (starting with yesterday)
-		local year=$(date -v-1d +%Y)
-		local month=$(date -v-1d +%m)
-		local day=$(date -v-1d +%d)
+		local year=$(reldate -1d +%Y)
+		local month=$(reldate -1d +%m)
+		local day=$(reldate -1d +%d)
 		local day_dir=''
 		local month_dir=''
 		while (( 10#$day != 10#$today )); do
@@ -782,7 +837,7 @@ function get_daily_usages() {
 	if does_repository_exist "$repo"; then
 		# calculate today & keep-through dates
 		local today="$d"
-		local keep_through=$(date -v-${config_keep_days}d +%d)
+		local keep_through=$(reldate -${config_keep_days}d +%d)
 		
 		# step through the subdirectories and calculate usage for those that are inside the range to preserve (starting with today)
 		local year="$y"
@@ -838,7 +893,7 @@ function get_monthly_usages() {
 	if does_repository_exist "$repo"; then
 		# calculate this month & keep through months
 		local this_month="$m"
-		local keep_through="$(date -v-${config_keep_months}m +%m)"
+		local keep_through="$(reldate -${config_keep_months}m +%m)"
 		
 		# step through the subdirectories and calculate usage for those that are inside the range to preserve (starting with this month)
 		local year="$y"
@@ -889,7 +944,7 @@ function get_annual_usages() {
 	if does_repository_exist "$repo"; then
 		# calculate this year & keep through years
 		local this_year="$y"
-		local keep_through="$(date -v-${config_keep_years}y +%Y)"
+		local keep_through="$(reldate -${config_keep_years}y +%Y)"
 		
 		# step through the subdirectories and calculate usage
 		local year="$y"
@@ -996,7 +1051,7 @@ function calculate_repository_median_usage() {
 	# output the minimum
 	if $success; then
 		local median=$(( ${#usages[@]} / 2 ))
-		IFS=$'\n' usages=($(sort <<<"${usages[*]}"))
+		IFS=$'\n' usages=($(sort -n <<<"${usages[*]}"))
 		median_usage="${usages[$median]}"
 		printf "%.0f" "$median_usage"
 	fi

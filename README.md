@@ -14,6 +14,8 @@ monthly file sets, and as many annual file sets as you would like. It is ideal
 for managing backup/snapshot sets, but should be flexible enough for any number 
 of uses.
 
+`43f` has been tested on Mac OS X and Linux.
+
 **NOTE:** `43f` is a destructive utility (it is designed to manage--and
 therefore delete--files), so please proceed with caution, have a backup, 
 run the unit tests, and test thoroughly before deploying!
@@ -71,10 +73,10 @@ TO-DO
 CHANGE LOG
 ----------
 
-v0.1   - Initial release.
+v0.1   - Initial release.  
 v0.1.1 - Added optional year parameter to `init` command. Fixed bug causing old
          files to be moved to incorrect month folder on the 1st day of a month.
-         Fix in launchd.plist.
+         Fix in launchd.plist. Linux support.
 
 ACKNOWLEDGEMENTS
 ----------------

@@ -1,6 +1,11 @@
 INSTALLING 43f
 ==============
 
+SYSTEM REQUIREMENTS
+-------------------
+
+`43f` has been tested on Mac OS X and Linux and requires Bash 3+.
+
 BASIC INSTALLATION
 ------------------
 
