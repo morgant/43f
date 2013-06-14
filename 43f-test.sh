@@ -358,7 +358,7 @@ it_does_move_files_outside_months_to_keep_dirs() {
 			if (( $y == $keep_year )); then
 				if [ ! -f "tmp/${y}/${keep_month}/${m}_test_file" ]; then success=1; fi
 			else
-				if [ ! -f "tmp/${keep_prev_year}/${keep_prev_month}/${m}_test_file"; then success=1; fi
+				if [ ! -f "tmp/${keep_prev_year}/${keep_prev_month}/${m}_test_file" ]; then success=1; fi
 			fi
 		fi
 	done
@@ -417,7 +417,7 @@ it_does_delete_directories_outside_years_to_keep_dirs() {
 	done
 	./43f -N -c tmp/temp.conf run
 	
-	# they all should have been preserved
+	# they all should have been deleted
 	success=0
 	for (( i=3; i<6; i++ )); do
 		y="$(( $(date +%Y) - $i ))"
