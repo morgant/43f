@@ -13,8 +13,12 @@
 # 
 # v0.1   - 2009-03-07 - Morgan Aldridge <morgant@makkintosshu.com>
 #                       Initial development.
-# v0.1.1 - 2013-06-05 - Morgan Aldridge
-#                       Added optional year parameter to 'init' command.
+# v0.1.1 - 2013-06-17 - Morgan Aldridge
+#                       Added optional year parameter to `init` command. Fixed 
+#                       bug causing old files to be moved to incorrect month 
+#                       folder on the 1st day of a month. Files outside the 
+#                       number of months to keep are now rolled properly. Fix
+#                       in launchd.plist. Linux support.
 # 
 # LICENSE:
 # 

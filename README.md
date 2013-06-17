@@ -67,7 +67,7 @@ TO-DO
 
     [ ] Add logging to `syslog` and/or a file
     [ ] Switch from a config file to a hidden .43f directory and .43f/config
-         file within the repository (like many VCS/SCM implementations use)
+         file within the repository (like many VCS/SCM implementations use)?
     [ ] Smart advance notifications based on disk usage rates gleaned from stats
 
 CHANGE LOG
@@ -76,7 +76,8 @@ CHANGE LOG
 v0.1   - Initial release.  
 v0.1.1 - Added optional year parameter to `init` command. Fixed bug causing old
          files to be moved to incorrect month folder on the 1st day of a month.
-         Fix in launchd.plist. Linux support.
+         Files outside the number of months to keep are now rolled properly. Fix
+         in launchd.plist. Linux support.
 
 ACKNOWLEDGEMENTS
 ----------------
