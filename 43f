@@ -71,31 +71,32 @@ function usage() {
 	echo "Usage: $tool [-h|-t|-V] [-v] [-c file] COMMAND"
 	echo
 	echo 'Options:'
-	echo '  -v                   : verbose output'
-	echo '  -V, --version        : print the version number and exit'
-	echo '  -h, --help           : print these usage instructions and exit'
-	echo '  -c, --config=file    : specify an alternate config file'
-	echo '                DEFAULT: /usr/local/etc/43f.conf'
-	echo '  -t                   : check the config file and exit'
-	echo "  -n, --dry-run        : don't actually move/delete any files"
-	echo '  -N, --no-notify      : disable email notifications'
+	echo '  -v                     : verbose output'
+	echo '  -V, --version          : print the version number and exit'
+	echo '  -h, --help             : print these usage instructions and exit'
+	echo '  -c, --config=file      : specify an alternate config file'
+	echo '                  DEFAULT: /usr/local/etc/43f.conf'
+	echo '  -t                     : check the config file and exit'
+	echo "  -n, --dry-run          : don't actually move/delete any files"
+	echo '  -N, --no-notify        : disable email notifications'
 	echo
 	echo 'Commands:'
-	echo '  init <path> [<year>] : initialize specified repository'
-	echo '  run                  : perform storage management'
-	echo '  stats                : print repository stats'
+	echo '  init <path> [<year>]   : initialize specified repository'
+	echo '  import <path> <format> : import files/directories with date format'
+	echo '  run                    : perform storage management'
+	echo '  stats                  : print repository stats'
 	echo
 	echo 'Config File Options:'
-	echo '  repository           : absolute path to archive repository'
-	echo '                DEFAULT: /usr/local/var/db/43f'
-	echo '  notify               : email address(es) to send notifications to'
-	echo '                DEFAULT: root'
-	echo '  days                 : number of daily file sets to preserve (1-31)'
-	echo '                DEFAULT: 31'
-	echo '  months               : number of monthly file sets to preserve (1-12)'
-	echo '                DEFAULT: 12'
-	echo '  years                : number of annual file sets to preserve (1+)'
-	echo '                DEFAULT: 10'
+	echo '  repository             : absolute path to archive repository'
+	echo '                  DEFAULT: /usr/local/var/db/43f'
+	echo '  notify                 : email address(es) to send notifications to'
+	echo '                  DEFAULT: root'
+	echo '  days                   : number of daily file sets to preserve (1-31)'
+	echo '                  DEFAULT: 31'
+	echo '  months                 : number of monthly file sets to preserve (1-12)'
+	echo '                  DEFAULT: 12'
+	echo '  years                  : number of annual file sets to preserve (1+)'
+	echo '                  DEFAULT: 10'
 }						  
 
 # print version info
@@ -662,6 +663,65 @@ function init_repository_symlinks() {
 		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
 		notify "$repo" "ERROR" "The '${repo}' repository doesn't exist!"
 		success=false
+	fi
+	
+	$success
+}
+
+function import_files_into_repository() {
+	local success=true
+	local repo="$1"
+	local import_dir="$2"
+	local date_format="$3"
+	local date_regex="$(date_format_to_regex "$date_format")"
+	
+	# make sure the repository and source directory exist
+	if ! does_repository_exist "$repo"; then
+		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
+		notify "$repo" "ERROR" "The '${repo}' repository doesn't exist!"
+		success=false
+	fi
+	if [ ! -d "$import_dir" ]; then
+		if $verbose; then echo "ERROR! Import directory '${import_dir}' doesn't exist!"; fi
+		notify "$repo" "ERROR" "The '${import_dir}' import directory doesn't exist!"
+		success=false
+	fi
+	
+	if $success; then
+		if $verbose; then echo "Importing files from '${import_dir}' into '${repo}' repository..."; fi
+		
+		# step through all the files in the import directory that match the date format
+		local daily_keep_through_epoch="$(reldate -$(( $config_keep_days - 1 ))d +%s)"
+		local today_epoch="$(convdatestr "%Y-%m-%d %H:%M:%S" "$y-$m-$d 23:59:59" "+%s")"
+		while IFS= read -r line; do
+			local file="$(basename "$line")"
+			local dst=''
+			
+			# parse the date from the filename so we can determine which directory in the repository to move it to
+			local file_date="$(echo -n "$file" | grep -o -E "$date_regex")"
+			local file_year="$(convdatestr "$date_format" "$file_date" "+%Y")"
+			local file_month="$(convdatestr "$date_format" "$file_date" "+%m")"
+			local file_day="$(convdatestr "$date_format" "$file_date" "+%d")"
+			local file_epoch="$(convdatestr "$date_format" "$file_date" "+%s")"
+			
+			# does the file's date fall within our days to keep? if so, set the destination to the appropriate day directory
+			if (( ( $file_epoch >= $daily_keep_through_epoch ) && ( $file_epoch <= $today_epoch ) )); then
+				printf -v dst "%s/%i/d%02i" "$repo" "$file_year" "$file_day"
+			# otherwise, just set the destination to the appropriate month directory
+			else
+				printf -v dst "%s/%i/m%02i" "$repo" "$file_year" "$file_month"
+			fi
+			
+			# and, move the file
+			if $verbose; then echo -n $'\t'"Moving '${file}' to '${dst}'... "; fi
+			if $dry_run || mv "$line" "$dst/"; then
+				if $verbose; then echo "Done."; fi
+			else
+				if $verbose; then echo "ERRO!"; fi
+				notify "$repo" "ERROR" "An unknown error occurred while attempting to move the '${line}' file/directory into the '${dst}' directory!"
+				success=false
+			fi
+		done <<< "$(Efind "$import_dir" -mindepth 1 -maxdepth 1 -regex ".*${date_regex}.*")"
 	fi
 	
 	$success
@@ -1595,6 +1655,23 @@ if [ $# -gt 0 ]; then
 		else
 			# one would normally handle arguments here
 			case "${argv[$i]}" in
+				# see if the user specified we import data into a repository
+				import)
+					((i++))
+					import_dir="${argv[$i]}"
+					((i++))
+					import_format="${argv[$i]}"
+					# load the config file
+					if load_config "$config_file"; then
+						# import the data
+						if ! import_files_into_repository "$config_repository" "$import_dir" "$import_format"; then
+							echo "ERROR! An error occurred while importing files from '${import_dir}'!"
+							echo 'Exiting!'
+							notify "$config_repository" "ERROR" "An error occurred while importing files from '${import_dir}'!"
+							exit 1
+						fi
+					fi
+					;;
 				# see if the user specified we initialize a repository
 				init)
 					((i++))

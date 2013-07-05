@@ -151,6 +151,48 @@ it_fails_config_test_with_invalid_datestamp() {
 	test "$out" = "  ERROR! 'datestamp' value in config file is out of range!"
 }
 
+it_imports_files_into_repository_days_to_keep_dirs() {
+	# create test files that should be imported into the repository's "to keep" day dirs and do `43f import`
+	./43f -N init tmp
+	mkdir tmp/import_test
+	for (( i=0; i<7; i++ )); do
+		touch "tmp/import_test/test_file-$(date -v-${i}d +%Y-%m-%d)"
+	done
+	./43f -N -c tmp/temp.conf import "tmp/import_test" "%Y-%m-%d"
+	
+	# they should've all been moved into the appropriate "to keep" day dirs
+	success=0
+	y="$(date +%Y)"
+	for (( i=0; i<7; i++ )); do
+		filename="test_file-$(date -v-${i}d +%Y-%m-%d)"
+		d="d$(date -v-${i}d +%d)"
+		if [ ! -f "tmp/${y}/${d}/${filename}" ]; then success=1; fi
+	done
+	
+	return $success
+}
+
+it_imports_files_into_repository_months_to_keep_dirs() {
+	# create test files that should be imported into the repository's "to keep" month dirs and do `43f import`
+	./43f -N init tmp
+	mkdir tmp/import_test
+	for (( i=1; i<7; i++ )); do
+		touch "tmp/import_test/test_file-$(date -v-${i}m +%Y-%m-%d)"
+	done
+	./43f -N -c tmp/temp.conf import "tmp/import_test" "%Y-%m-%d"
+	
+	# they should've all been moved into the appropriate "to keep" month dirs
+	success=0
+	for (( i=1; i<=6; i++ )); do
+		filename="test_file-$(date -v-${i}m +%Y-%m-%d)"
+		y="$(date -v-${i}m +%Y)"
+		m="m$(date -v-${i}m +%m)"
+		if [ ! -f "tmp/${y}/${m}/${filename}" ]; then success=1; fi
+	done
+	
+	return $success
+}
+
 it_does_not_move_files_modified_today_from_todays_dir() {
 	y="$(date +%Y)"
 	printf -v d "d%02i" "$(date +%d)"
