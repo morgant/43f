@@ -82,7 +82,7 @@ function usage() {
 	echo
 	echo 'Commands:'
 	echo '  init <path> [<year>]   : initialize specified repository'
-	echo '  import <path> <format> : import files/directories with date format'
+	echo '  import <format> <path> : import files/directories with date format'
 	echo '  run                    : perform storage management'
 	echo '  stats                  : print repository stats'
 	echo
@@ -671,8 +671,8 @@ function init_repository_symlinks() {
 function import_files_into_repository() {
 	local success=true
 	local repo="$1"
-	local import_dir="$2"
-	local date_format="$3"
+	local date_format="$2"
+	local import_dir="$3"
 	local date_regex="$(date_format_to_regex "$date_format")"
 	
 	# make sure the repository and source directory exist
@@ -1658,13 +1658,13 @@ if [ $# -gt 0 ]; then
 				# see if the user specified we import data into a repository
 				import)
 					((i++))
-					import_dir="${argv[$i]}"
-					((i++))
 					import_format="${argv[$i]}"
+					((i++))
+					import_dir="${argv[$i]}"
 					# load the config file
 					if load_config "$config_file"; then
 						# import the data
-						if ! import_files_into_repository "$config_repository" "$import_dir" "$import_format"; then
+						if ! import_files_into_repository "$config_repository" "$import_format" "$import_dir"; then
 							echo "ERROR! An error occurred while importing files from '${import_dir}'!"
 							echo 'Exiting!'
 							notify "$config_repository" "ERROR" "An error occurred while importing files from '${import_dir}'!"

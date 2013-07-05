@@ -158,7 +158,7 @@ it_imports_files_into_repository_days_to_keep_dirs() {
 	for (( i=0; i<7; i++ )); do
 		touch "tmp/import_test/test_file-$(date -v-${i}d +%Y-%m-%d)"
 	done
-	./43f -N -c tmp/temp.conf import "tmp/import_test" "%Y-%m-%d"
+	./43f -N -c tmp/temp.conf import "%Y-%m-%d" "tmp/import_test"
 	
 	# they should've all been moved into the appropriate "to keep" day dirs
 	success=0
@@ -179,7 +179,7 @@ it_imports_files_into_repository_months_to_keep_dirs() {
 	for (( i=1; i<7; i++ )); do
 		touch "tmp/import_test/test_file-$(date -v-${i}m +%Y-%m-%d)"
 	done
-	./43f -N -c tmp/temp.conf import "tmp/import_test" "%Y-%m-%d"
+	./43f -N -c tmp/temp.conf import "%Y-%m-%d" "tmp/import_test"
 	
 	# they should've all been moved into the appropriate "to keep" month dirs
 	success=0
