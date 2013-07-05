@@ -706,10 +706,10 @@ function import_files_into_repository() {
 			
 			# does the file's date fall within our days to keep? if so, set the destination to the appropriate day directory
 			if (( ( $file_epoch >= $daily_keep_through_epoch ) && ( $file_epoch <= $today_epoch ) )); then
-				printf -v dst "%s/%i/d%02i" "$repo" "$file_year" "$file_day"
+				printf -v dst "%s/%i/d%02i" "$repo" "$file_year" "$(( 10#$file_day ))"
 			# otherwise, just set the destination to the appropriate month directory
 			else
-				printf -v dst "%s/%i/m%02i" "$repo" "$file_year" "$file_month"
+				printf -v dst "%s/%i/m%02i" "$repo" "$file_year" "$(( 10#$file_month ))"
 			fi
 			
 			# and, move the file
