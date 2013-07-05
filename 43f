@@ -19,6 +19,8 @@
 #                       folder on the 1st day of a month. Files outside the 
 #                       number of months to keep are now rolled properly. Fix
 #                       in launchd.plist. Linux support.
+# v0.2   - 2013-07-05 - Morgan Aldridge
+#                       Added new `import` command.
 # 
 # LICENSE:
 # 
@@ -47,7 +49,7 @@
 
 # info
 tool=$(basename "$0")
-version='0.1.1'
+version='0.2'
 copyright='Copyright (c) 2009-2013 Morgan Aldridge'
 
 # global variables
