@@ -19,6 +19,9 @@
 #                       folder on the 1st day of a month. Files outside the 
 #                       number of months to keep are now rolled properly. Fix
 #                       in launchd.plist. Linux support.
+# v0.1.2 - 2013-08-08 - Morgan Aldridge
+#                       Fixed bug causing fatal error when moving files to
+#                       month folder when destination month was >= 8.
 # 
 # LICENSE:
 # 
@@ -561,7 +564,7 @@ function init_repository() {
 		for (( month=1; month<=12; month++ )); do
 			local month_dir
 			# check for month directory
-			printf -v month_dir "%s/%s/m%02d" "$repo" "$year" "$month"
+			printf -v month_dir "%s/%s/m%02d" "$repo" "$year" "$(( 10#$month ))"
 			if $verbose; then echo -n "Month Directory ${month_dir} "; fi
 			if [ -d "$month_dir" ]; then
 				if $verbose; then echo "exists."; fi
@@ -680,7 +683,7 @@ function roll_repository_daily_to_monthly() {
 		local dst
 		local mtime=''
 		printf -v src "%s/%d/d%02d" "$repo" "$year" "$day"
-		printf -v dst "%s/%d/m%02d" "$repo" "$year" "$month"
+		printf -v dst "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
 		if $verbose; then echo -n $'\n'"    Moving files & directories from '$src' to '$dst' ("; fi
 		if $mtime_today; then
 			if $verbose; then echo -n "including"; fi
@@ -763,7 +766,7 @@ function consolidate_repository_monthly() {
 	
 	if does_repository_exist "$repo"; then
 		local dir
-		printf -v dir "%s/%d/m%02d" "$repo" "$year" "$month"
+		printf -v dir "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
 		local last_file=''
 		
 		# step through all the files and directories and look for any with the same name except for a datestamp
@@ -870,7 +873,7 @@ function roll_repository_directories() {
 		while (( 10#$day != 10#$today )); do
 			# build the directory paths
 			printf -v day_dir "%s/%d/d%02d" "$repo" "$year" "$day"
-			printf -v month_dir "%s/%d/m%02d" "$repo" "$year" $(( 10#$month ))
+			printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
 			
 			if $verbose; then echo -n "Processing directory '$day_dir'... "; fi
 			# are we keeping a range that doesn't wrap (i.e. today is greater than the day through which we're keeping)?
@@ -916,7 +919,7 @@ function roll_repository_directories() {
 			fi
 		fi
 		printf -v day_dir "%s/%d/d%02d" "$repo" "$year" "$day"
-		printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$month"
+		printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
 		if $verbose; then echo -n "Processing directory '$day_dir'... "$'\n'"  Processing (special)... "; fi
 		# move the contents of the day's directory to the appropriate month's directory
 		if roll_repository_daily_to_monthly "$repo" "$day" "$month" false; then
@@ -981,7 +984,7 @@ function roll_repository_directories() {
 		# consolidate files in the monthly directories
 		if $success; then
 			for (( month=1; month <= 12; month++ )); do
-				printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$month"
+				printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
 				if $verbose; then echo -n "Consolidating files & directories in '$month_dir'... "; fi
 				if consolidate_repository_monthly "$repo" "$month"; then
 				    if $verbose; then echo "Done."; fi

@@ -78,6 +78,8 @@ v0.1.1 - Added optional year parameter to `init` command. Fixed bug causing old
          files to be moved to incorrect month folder on the 1st day of a month.
          Files outside the number of months to keep are now rolled properly. Fix
          in launchd.plist. Linux support.
+v0.1.2 - Fixed bug causing fatal error when moving files to month folder when 
+         destination month was greater than or equal to 8 (August).
 
 ACKNOWLEDGEMENTS
 ----------------
