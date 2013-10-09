@@ -174,7 +174,7 @@ it_does_move_files_modified_last_month_from_todays_dir() {
 	./43f -N -c tmp/temp.conf run
 	
 	# it should've been moved to last month's directory
-	printf -v m "m%02i" "$(date -v-1m +%m)"
+	printf -v m "m%02i" "$(( 10#$(date -v-1m +%m) ))"
 	test -f "tmp/${y}/${m}/test_file"
 }
 

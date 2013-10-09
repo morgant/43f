@@ -22,6 +22,10 @@
 # v0.1.2 - 2013-08-08 - Morgan Aldridge
 #                       Fixed bug causing fatal error when moving files to
 #                       month folder when destination month was >= 8.
+# v0.1.2 - 2013-10-09 - Morgan Aldridge
+#                       Fixed bug causing file consolidation to fail for files
+#                       in an October month folder. Fixed possible issues moving
+#                       daily files to month folder when day was >= 8.
 # 
 # LICENSE:
 # 
@@ -438,7 +442,7 @@ function date_format_to_regex() {
 	date_format=$(echo -n "$date_format" | Esed "s/%Y/([0-9]{4})/g")
 	
 	# replace %m with two digit month match
-	date_format=$(echo -n "$date_format" | Esed "s/%m/(0[123456789]|1[12])/g")
+	date_format=$(echo -n "$date_format" | Esed "s/%m/(0[123456789]|1[012])/g")
 	
 	# replace %d with two digit day match
 	date_format=$(echo -n "$date_format" | Esed "s/%d/(0[123456789]|[12][0-9]|3[01])/g")
@@ -588,7 +592,7 @@ function init_repository() {
 		for (( day=1; day<=31; day++ )); do
 		      local day_dir
 		      # check for the day directory
-		      printf -v day_dir "%s/%s/d%02d" "$repo" "$year" "$day"
+		      printf -v day_dir "%s/%s/d%02d" "$repo" "$year" "$(( 10#$day ))"
 		      if $verbose; then echo -n "Day Directory ${day_dir} "; fi
 		      if [ -d "$day_dir" ]; then
 		      	if $verbose; then echo "exists."; fi
@@ -682,7 +686,7 @@ function roll_repository_daily_to_monthly() {
 		local src
 		local dst
 		local mtime=''
-		printf -v src "%s/%d/d%02d" "$repo" "$year" "$day"
+		printf -v src "%s/%d/d%02d" "$repo" "$year" "$(( 10#$day ))"
 		printf -v dst "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
 		if $verbose; then echo -n $'\n'"    Moving files & directories from '$src' to '$dst' ("; fi
 		if $mtime_today; then
@@ -872,7 +876,7 @@ function roll_repository_directories() {
 		local month_dir=''
 		while (( 10#$day != 10#$today )); do
 			# build the directory paths
-			printf -v day_dir "%s/%d/d%02d" "$repo" "$year" "$day"
+			printf -v day_dir "%s/%d/d%02d" "$repo" "$year" "$(( 10#$day ))"
 			printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
 			
 			if $verbose; then echo -n "Processing directory '$day_dir'... "; fi
@@ -918,7 +922,7 @@ function roll_repository_directories() {
 				(( year-- ))
 			fi
 		fi
-		printf -v day_dir "%s/%d/d%02d" "$repo" "$year" "$day"
+		printf -v day_dir "%s/%d/d%02d" "$repo" "$year" "$(( 10#$day ))"
 		printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
 		if $verbose; then echo -n "Processing directory '$day_dir'... "$'\n'"  Processing (special)... "; fi
 		# move the contents of the day's directory to the appropriate month's directory
