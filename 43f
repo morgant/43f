@@ -22,10 +22,12 @@
 # v0.1.2 - 2013-08-08 - Morgan Aldridge
 #                       Fixed bug causing fatal error when moving files to
 #                       month folder when destination month was >= 8.
-# v0.1.2 - 2013-10-09 - Morgan Aldridge
+# v0.1.3 - 2013-10-09 - Morgan Aldridge
 #                       Fixed bug causing file consolidation to fail for files
 #                       in an October month folder. Fixed possible issues moving
 #                       daily files to month folder when day was >= 8.
+# v0.1.4 - 2013-10-29 - Morgan Aldridge
+#                       Fixed disk usage statistics calculation bugs.
 # 
 # LICENSE:
 # 
@@ -54,7 +56,7 @@
 
 # info
 tool=$(basename "$0")
-version='0.1.3'
+version='0.1.4'
 copyright='Copyright (c) 2009-2013 Morgan Aldridge'
 
 # global variables
