@@ -865,7 +865,7 @@ function roll_repository_directories() {
 	if does_repository_exist "$repo"; then
 		# calculate today & keep-through dates
 		local today="$d"
-		local keep_through="$(reldate -$((${config_keep_days} - 1 ))d +%d)"
+		local keep_through="$(reldate -$(( $config_keep_days - 1 ))d +%d)"
 		if $verbose; then echo "Keeping files through 'd${keep_through}'."; fi
 		
 		# step through the day subdirectories and "process" those that are outside the range to preserve (starting with yesterday)
@@ -1074,7 +1074,7 @@ function get_daily_usages() {
 	if does_repository_exist "$repo"; then
 		# calculate today & keep-through dates
 		local today="$d"
-		local keep_through=$(reldate -${config_keep_days}d +%d)
+		local keep_through="$(reldate -$(( config_keep_days - 1 ))d +%d)"
 		
 		# step through the subdirectories and calculate usage for those that are inside the range to preserve (starting with today)
 		local year="$y"
@@ -1109,7 +1109,7 @@ function get_daily_usages() {
 			fi
 			
 			# if we've gone all the way back around to today, break out of the loop
-			if [ "$day" -eq "$today" ]; then
+			if (( 10#$day == 10#$today )); then
 				break;
 			else
 				printf "\n"
@@ -1130,7 +1130,7 @@ function get_monthly_usages() {
 	if does_repository_exist "$repo"; then
 		# calculate this month & keep through months
 		local this_month="$m"
-		local keep_through="$(reldate -${config_keep_months}m +%m)"
+		local keep_through="$(reldate -$(( $config_keep_months - 1 ))m +%m)"
 		
 		# step through the subdirectories and calculate usage for those that are inside the range to preserve (starting with this month)
 		local year="$y"
@@ -1138,11 +1138,11 @@ function get_monthly_usages() {
 		local month_dir=''
 		while true; do
 			# build the directory path
-			printf -v month_dir "%s/%d/m%02d" "$repo" "$year" $(( 10#$month ))
+			printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
 			
 			# are we keeping a range that doesn't wrap (i.e. this month is greater than the month through which we're keeping)?
 			# or, are we keeping a range that wraps (i.e. the month through which we're keeping is greater than this month)?
-			if (( ( ( 10#$this_month >= 10#$keep_through ) && ( 10#$month >= 10#$keep_through ) ) || ( ( 10#$this_month <= 10#$keep_through ) && ( ( 10#$month <= 10#$this_month ) || ( 10#$month >= 10#$keep_through ) ) ) )); then
+			if (( ( ( 10#$this_month >= 10#$keep_through ) && ( 10#$month >= 10#$keep_through ) && ( 10#$month <= 10#$this_month ) ) || ( ( 10#$this_month <= 10#$keep_through ) && ( ( 10#$month <= 10#$this_month ) || ( 10#$month >= 10#$keep_through ) ) ) )); then
 				# calculate the usage, add to total, increment the counter
 				local usage=$(du_kb "$month_dir")
 				if [ $? -eq 0 ]; then
@@ -1160,7 +1160,7 @@ function get_monthly_usages() {
 			fi
 			
 			# if we've gone all the way back around to this month, break out of the loop
-			if [ "$month" -eq "$this_month" ]; then
+			if (( 10#$month == 10#$this_month )); then
 				break;
 			else
 				printf "\n"
@@ -1181,7 +1181,7 @@ function get_annual_usages() {
 	if does_repository_exist "$repo"; then
 		# calculate this year & keep through years
 		local this_year="$y"
-		local keep_through="$(reldate -${config_keep_years}y +%Y)"
+		local keep_through="$(reldate -$(( $config_keep_years - 1 ))y +%Y)"
 		
 		# step through the subdirectories and calculate usage
 		local year="$y"
@@ -1198,8 +1198,8 @@ function get_annual_usages() {
 				else
 					success=false
 				fi
-			else
-				printf "0\n"
+			#else
+			#	printf "\n"
 			fi
 			
 			# decrement the year
@@ -1221,19 +1221,27 @@ function calculate_repository_mean_usage() {
 	local n=0 
 	
 	if does_repository_exist "$repo"; then
-		local usage=0
-		while IFS= read -r usage; do
-		   (( total_usage += usage ))
-		   (( n++ ))
-		done <<< "$(get_${stratum}_usages "$repo")"
+		local usages="$(get_${stratum}_usages "$repo")"
 		if [ $? -ne 0 ]; then
 			success=false
+		else
+			local usage=0
+			while IFS= read -r usage; do
+				if [ -n "$usage" ]; then
+					(( total_usage += usage ))
+					(( n++ ))
+				fi
+			done <<< "$usages"
 		fi
 	fi
 	
 	# output the average
 	if $success; then
-		printf "%.0f" $(( total_usage/n ))
+		if [ $n -gt 0 ]; then
+			printf "%.0f" $(( total_usage/n ))
+		else
+			echo -n 0
+		fi
 	fi
 	
 	$success
@@ -1247,16 +1255,20 @@ function calculate_repository_min_usage() {
 	local min_usage=''
 	
 	if does_repository_exist "$repo"; then
-		local usage=0
-		while IFS= read -r usage; do
-			if [ -z "$min_usage" ]; then
-				min_usage="$usage"
-			elif [[ (( usage < min_usage )) ]]; then
-				min_usage="$usage"
-			fi
-		done <<< "$(get_${stratum}_usages "$repo")"
+		local usages="$(get_${stratum}_usages "$repo")"
 		if [ $? -ne 0 ]; then
 			success=false
+		else
+		local usage=0
+			while IFS= read -r usage; do
+				if [ -n "$usage" ]; then
+					if [ -z "$min_usage" ]; then
+						min_usage="$usage"
+					elif (( usage < min_usage )); then
+						min_usage="$usage"
+					fi
+				fi
+			done <<< "$usages"
 		fi
 	fi
 	
@@ -1273,23 +1285,27 @@ function calculate_repository_median_usage() {
 	local success=true
 	local repo="$1"
 	local stratum="$2"
-	local usages=()
+	local usages_list=()
 	
 	if does_repository_exist "$repo"; then
-		local usage=0
-		while IFS= read -r usage; do
-			usages+=("$usage")
-		done <<< "$(get_${stratum}_usages "$repo")"
+		local usages="$(get_${stratum}_usages "$repo")"
 		if [ $? -ne 0 ]; then
 			success=false
+		else
+			local usage=0
+			while IFS= read -r usage; do
+				if [ -n "$usage" ]; then
+					usages_list+=("$usage")
+				fi
+			done <<< "$usages"
 		fi
 	fi
 	
-	# output the minimum
+	# output the median
 	if $success; then
-		local median=$(( ${#usages[@]} / 2 ))
-		IFS=$'\n' usages=($(sort -n <<<"${usages[*]}"))
-		median_usage="${usages[$median]}"
+		local median=$(( ${#usages_list[@]} / 2 ))
+		IFS=$'\n' usages_list=($(sort -n <<<"${usages_list[*]}"))
+		median_usage="${usages_list[$median]}"
 		printf "%.0f" "$median_usage"
 	fi
 	
@@ -1304,16 +1320,20 @@ function calculate_repository_max_usage() {
 	local max_usage=''
 	
 	if does_repository_exist "$repo"; then
-		local usage=0
-		while IFS= read -r usage; do
-			if [ -z "$max_usage" ]; then
-				max_usage="$usage"
-			elif [[ (( $usage > $max_usage )) ]]; then
-				max_usage="$usage"
-			fi
-		done <<< "$(get_${stratum}_usages "$repo")"
+		usages="$(get_${stratum}_usages "$repo")"
 		if [ $? -ne 0 ]; then
 			success=false
+		else
+			local usage=0
+			while IFS= read -r usage; do
+				if [ -n "$usage" ]; then
+					if [ -z "$max_usage" ]; then
+						max_usage="$usage"
+					elif (( $usage > $max_usage )); then
+						max_usage="$usage"
+					fi
+				fi
+			done <<< "$usages"
 		fi
 	fi
 	
