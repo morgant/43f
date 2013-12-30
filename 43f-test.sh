@@ -195,7 +195,7 @@ it_imports_files_into_repository_months_to_keep_dirs() {
 
 it_does_not_move_files_modified_today_from_todays_dir() {
 	y="$(date +%Y)"
-	printf -v d "d%02i" "$(date +%d)"
+	printf -v d "d%02i" "$(( 10#$(date +%d) ))"
 	
 	# create a file in today's directory (leaving creation/modification time set to today) and do `43f run`
 	./43f -N init tmp
@@ -208,7 +208,7 @@ it_does_not_move_files_modified_today_from_todays_dir() {
 
 it_does_move_files_modified_last_month_from_todays_dir() {
 	y="$(date +%Y)"
-	printf -v d "d%02i" "$(date +%d)"
+	printf -v d "d%02i" "$(( 10#$(date +%d) ))"
 	
 	# create a file in today's directory (setting the creation/modification time to last month) and do `43f run`
 	./43f -N init tmp
@@ -216,7 +216,7 @@ it_does_move_files_modified_last_month_from_todays_dir() {
 	./43f -N -c tmp/temp.conf run
 	
 	# it should've been moved to last month's directory
-	printf -v m "m%02i" "$(date -v-1m +%m)"
+	printf -v m "m%02i" "$(( 10#$(date -v-1m +%m) ))"
 	test -f "tmp/${y}/${m}/test_file"
 }
 
@@ -226,7 +226,7 @@ it_does_not_move_files_within_days_to_keep_dirs() {
 	today="$(date +%d)"
 	for (( i=0; i<7; i++ )); do
 		y="$(date +%Y)"
-		if (( ( $today - $i ) > 0 )); then
+		if (( ( 10#$today - $i ) > 0 )); then
 			printf -v d "d%02i" $(( $today - $i ))
 		else
 			printf -v d "d%02i" $(( 31 - ( $i - $today ) ))
@@ -289,7 +289,7 @@ it_does_move_files_outside_days_to_keep_dirs() {
 				m=12
 			fi
 		fi
-		printf -v m "m%02i" "$m"
+		printf -v m "m%02i" "$(( 10#$m ))"
 		if [ ! -f "tmp/${y}/${m}/${d}_test_file" ]; then success=1; fi
 	done
 	
@@ -480,7 +480,7 @@ it_does_not_consolidate_files_with_different_names() {
 	# create files with different names in the same month directory and do `43f run`
 	./43f -N init tmp
 	y="$(date +%Y)"
-	printf -v m "m%02i" "$(date +%m)"
+	printf -v m "m%02i" "$(( 10#$(date +%m) ))"
 	touch "tmp/${y}/${m}/test_file_1"
 	touch "tmp/${y}/${m}/some_other_test_file"
 	./43f -N -c tmp/temp.conf run
