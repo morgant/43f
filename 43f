@@ -29,7 +29,8 @@
 # v0.1.4 - 2013-10-29 - Morgan Aldridge
 #                       Fixed disk usage statistics calculation bugs.
 # v0.2   - 2013-07-05 - Morgan Aldridge
-#                       Added new `import` command.
+#                       Added new `import` command, plus disk usage growth rate
+#                       calculations in `stats` command.
 # 
 # LICENSE:
 # 
@@ -1276,7 +1277,7 @@ function get_annual_usages() {
 	$success
 }
 
-# calculate the average (mean) daily disk usage for a repository
+# calculate the average (mean) disk usage for a repository
 function calculate_repository_mean_usage() {
 	local success=true
 	local repo="$1"
@@ -1311,7 +1312,7 @@ function calculate_repository_mean_usage() {
 	$success
 }
 
-# calculate the minimum daily disk usage for a repository
+# calculate the minimum disk usage for a repository
 function calculate_repository_min_usage() {
 	local success=true
 	local repo="$1"
@@ -1344,7 +1345,7 @@ function calculate_repository_min_usage() {
 	$success
 }
 
-# calculate the median daily disk usage for a repository
+# calculate the median disk usage for a repository
 function calculate_repository_median_usage() {
 	local success=true
 	local repo="$1"
@@ -1376,7 +1377,7 @@ function calculate_repository_median_usage() {
 	$success
 }
 
-# calculate the maximum daily disk usage for a repository
+# calculate the maximum disk usage for a repository
 function calculate_repository_max_usage() {
 	local success=true
 	local repo="$1"
@@ -1409,6 +1410,32 @@ function calculate_repository_max_usage() {
 	$success
 }
 
+# calculate the average disk usage rate for a repository
+function calculate_repository_average_usage_rate() {
+	local success=true
+	local repo="$1"
+	local stratum="$2"
+	
+	if does_repository_exist "$repo"; then
+		: # STUB!
+	fi
+	
+	$success
+}
+
+# calculate the compound disk usage rate for a repository
+function calculate_repository_compound_usage_rate() {
+	local success=true
+	local repo="$1"
+	local stratum="$2"
+	
+	if does_repository_exist "$repo"; then
+		: # STUB!
+	fi
+	
+	$success
+}
+
 # print out repository stats
 function print_repository_stats() {
 	local success=true
@@ -1429,6 +1456,12 @@ function print_repository_stats() {
 		local mean_daily_usage
 		local mean_monthly_usage
 		local mean_annual_usage
+		local mean_daily_rate
+		local mean_monthly_rate
+		local mean_annual_rate
+		local compound_daily_rate
+		local compound_monthly_rate
+		local compound_annual_rate
 		
 		# calculate disk usage for the repository
 		disk_usage=$(kb_to_hr $(du_kb "$repo"))
@@ -1478,6 +1511,22 @@ function print_repository_stats() {
 			success=false
 		fi
 		
+		# calculate average daily disk usage rate
+		mean_daily_rate="$(calculate_repository_average_usage_rate "$repo" daily)"
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating average daily disk space usage rate for the repository '$repo'!"
+			notify "$repo" "ERROR" "An error occurred while calculating average daily disk space usage rate for the repository '$repo'!"
+			success=false
+		fi
+		
+		# calculate compound daily disk usage rate
+		compound_daily_rate="$(calculate_repository_compound_usage_rate "$repo" daily)"
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating compound daily disk space usage rate for the repository '$repo'!"
+			notify "$repo" "ERROR" "An error occurred while calculating compound daily disk space usage rate for the repository '$repo'!"
+			success=false
+		fi
+		
 		# calculate minimum monthly disk usage
 		min_monthly_usage=$(kb_to_hr $(calculate_repository_min_usage "$repo" monthly))
 		if [ $? -ne 0 ]; then
@@ -1507,6 +1556,22 @@ function print_repository_stats() {
 		if [ $? -ne 0 ]; then
 			echo "ERROR! An error occurred while calculating average monthly disk space used by the repository '$repo'!"
 			notify "$repo" "ERROR" "An error occurred while calculating average monthly disk space used by the repository '$repo'!"
+			success=false
+		fi
+		
+		# calculate average monthly disk usage rate
+		mean_monthly_rate="$(calculate_repository_average_usage_rate "$repo" monthly)"
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating average monthly disk space usage rate for the repository '$repo'!"
+			notify "$repo" "ERROR" "An error occurred while calculating average monthly disk space usage rate for the repository '$repo'!"
+			success=false
+		fi
+		
+		# calculate compound monthly disk usage rate
+		compound_monthly_rate="$(calculate_repository_compound_usage_rate "$repo" monthly)"
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating compound monthly disk space usage rate for the repository '$repo'!"
+			notify "$repo" "ERROR" "An error occurred while calculating compound monthly disk space usage rate for the repository '$repo'!"
 			success=false
 		fi
 		
@@ -1542,6 +1607,22 @@ function print_repository_stats() {
 			success=false
 		fi
 		
+		# calculate average annual disk usage rate
+		mean_annual_rate="$(calculate_repository_average_usage_rate "$repo" annual)"
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating average annual disk space usage rate for the repository '$repo'!"
+			notify "$repo" "ERROR" "An error occurred while calculating average annual disk space usage rate for the repository '$repo'!"
+			success=false
+		fi
+		
+		# calculate compound annual disk usage rate
+		compound_annual_rate="$(calculate_repository_compound_usage_rate "$repo" annual)"
+		if [ $? -ne 0 ]; then
+			echo "ERROR! An error occurred while calculating compound annual disk space usage rate for the repository '$repo'!"
+			notify "$repo" "ERROR" "An error occurred while calculating compound annual disk space usage rate for the repository '$repo'!"
+			success=false
+		fi
+		
 		# print the stats
 		if $success; then
 			echo "Statistics for repository '$repo':"$'\n'
@@ -1553,16 +1634,22 @@ function print_repository_stats() {
 			echo "  Median:                 $median_daily_usage"
 			echo "  Maximum:                $max_daily_usage"
 			echo "  Average:                $mean_daily_usage"
+			echo "  Average Rate:           $mean_daily_rate"
+			echo "  Compound Rate:          $compound_daily_rate"
 			echo 'Monthly Data Disk Usage:'
 			echo "  Minimum:                $min_monthly_usage"
 			echo "  Median:                 $median_monthly_usage"
 			echo "  Maximum:                $max_monthly_usage"
 			echo "  Average:                $mean_monthly_usage"
+			echo "  Average Rate:           $mean_monthly_rate"
+			echo "  Compound Rate:          $compound_monthly_rate"
 			echo 'Annual Data Disk Usage:'
 			echo "  Minimum:                $min_annual_usage"
 			echo "  Median:                 $median_annual_usage"
 			echo "  Maximum:                $max_annual_usage"
 			echo "  Average:                $mean_annual_usage"
+			echo "  Average Rate:           $mean_annual_rate"
+			echo "  Compound Rate:          $compound_annual_rate"
 		else
 			echo "ERROR! An error occurred while gathering statistics, so can't safely print them!"
 		fi
