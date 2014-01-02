@@ -82,7 +82,8 @@ v0.1.2 - Fixed bug causing fatal error when moving files to month folder when
          destination month was greater than or equal to 8 (August).  
 v0.1.3 - Fixed bug causing file consolidation to fail for files in an October 
          month folder.  
-v0.1.4 - Fixed disk usage statistics calculation bugs.
+v0.1.4 - Fixed disk usage statistics calculation bugs.  
+v0.1.5 - Automatically create new year directory on 1st of year.
 
 ACKNOWLEDGEMENTS
 ----------------

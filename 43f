@@ -28,6 +28,8 @@
 #                       daily files to month folder when day was >= 8.
 # v0.1.4 - 2013-10-29 - Morgan Aldridge
 #                       Fixed disk usage statistics calculation bugs.
+# v0.1.5 - 2014-01-02 - Morgan Aldridge
+#                       Automatically create new year directory on 1st of year.
 # 
 # LICENSE:
 # 
@@ -56,8 +58,8 @@
 
 # info
 tool=$(basename "$0")
-version='0.1.4'
-copyright='Copyright (c) 2009-2013 Morgan Aldridge'
+version='0.1.5'
+copyright='Copyright (c) 2009-2014 Morgan Aldridge'
 
 # global variables
 verbose=false
@@ -1644,6 +1646,19 @@ if [ $# -gt 0 ]; then
 				run)
 					# load the config file
 					if load_config "$config_file"; then
+						# init the new year, if necessary (we only do this on the 1st of the year)
+						if [[ ( $m == 1 ) && ( $d == 1 ) ]]; then
+							if $verbose; then echo -n "Creating new '$y' year directory... "; fi
+							if init_repository "$repository_dir" "$y"; then
+								if $verbose; then echo "Done."; fi
+							else
+								echo "ERROR! An error occurred while creating the new '$y' year directory in '${repository_dir}'!"
+								echo 'Exiting.'
+								notify "$repository_dir" "ERROR" "An error occurred while creating the new '$y' year directory in '${repository_dir}'!"
+								exit 1
+							fi
+						fi
+						
 						# update convenience symlinks
 						if $verbose; then echo -n "Updating convenience symlinks in repository '${config_repository}'... "; fi
 						if init_repository_symlinks "$config_repository"; then
