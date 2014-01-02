@@ -2,6 +2,18 @@
 
 describe "43f"
 
+# temporarily set the date & time using the specified format string & value with the ability to restore the original date & time later (adjusted for the time spent with the temporary date & time)
+start_date_test() {
+	original_start_time=$(date +%s)
+	date -f "$1" "$2"
+	temp_start_time=$(date +%s)
+}
+
+# restore the original date & time from when start_date_test() was called (adjusted for the time spent in the temporary date & time)
+stop_date_test() {
+	date -f "%s" $(( $(date +%s) - $temp_start_time + $original_start_time ))
+}
+
 before() {
 	# make a temp dir
 	if [ ! -d tmp ]; then
