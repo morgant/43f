@@ -100,7 +100,10 @@ the light of day otherwise.
 Development and troubleshooting was _greatly_ simplified by the use of Rocky 
 Bernstein's [`bashdb`](http://bashdb.sourceforge.net/) debugger for `bash`.
 
-Unit tests are implemented using [`roundup`](https://github.com/bmizerany/roundup).
+Functional tests are implemented using Blake Mizerany's [`roundup`](https://github.com/bmizerany/roundup).
+**NOTE:** Since 43f relies so heavily on date calculations, there are some
+functional tests that will change & restore your system's date & time, however
+these tests are disabled by default (look for `xit_` tests).
 
 LICENSE
 -------

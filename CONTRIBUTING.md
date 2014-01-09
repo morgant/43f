@@ -24,11 +24,12 @@ MAKING CHANGES
 You will need to do the following to make changes that are most likely to be
 accepted with little headache and back & forth:
 
-1. Fork the [`43f`](https://github.com/morgant/43f) project on GitHub
-2. Create a topic branch from the `master` branch
-3. Make commits in logical units and with properly explanatory commit messages
-4. Add  tests to validate any functional changes
-5. Run all unit tests to confirm that nothing else broke.
+1. Fork the [`43f`](https://github.com/morgant/43f) project on GitHub.
+2. Create a topic branch from the `master` branch.
+3. Make commits in logical units and with properly explanatory commit messages.
+4. Add tests to validate any functional changes.
+5. Run all functional tests to confirm that nothing else broke.
+6. Disable any tests that change the system date or time.
 
 SUBMITTING CHANGES
 ------------------
