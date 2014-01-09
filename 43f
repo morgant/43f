@@ -28,7 +28,7 @@
 #                       daily files to month folder when day was >= 8.
 # v0.1.4 - 2013-10-29 - Morgan Aldridge
 #                       Fixed disk usage statistics calculation bugs.
-# v0.1.5 - 2014-01-02 - Morgan Aldridge
+# v0.1.5 - 2014-01-09 - Morgan Aldridge
 #                       Automatically create new year directory on 1st of year.
 # 
 # LICENSE:
@@ -1647,14 +1647,14 @@ if [ $# -gt 0 ]; then
 					# load the config file
 					if load_config "$config_file"; then
 						# init the new year, if necessary (we only do this on the 1st of the year)
-						if [[ ( $m == 1 ) && ( $d == 1 ) ]]; then
+						if (( ( 10#$m == 1 ) && ( 10#$d == 1 ) )); then
 							if $verbose; then echo -n "Creating new '$y' year directory... "; fi
-							if init_repository "$repository_dir" "$y"; then
+							if init_repository "$config_repository" "$y"; then
 								if $verbose; then echo "Done."; fi
 							else
-								echo "ERROR! An error occurred while creating the new '$y' year directory in '${repository_dir}'!"
+								echo "ERROR! An error occurred while creating the new '$y' year directory in '${config_repository}'!"
 								echo 'Exiting.'
-								notify "$repository_dir" "ERROR" "An error occurred while creating the new '$y' year directory in '${repository_dir}'!"
+								notify "$config_repository" "ERROR" "An error occurred while creating the new '$y' year directory in '${config_repository}'!"
 								exit 1
 							fi
 						fi
