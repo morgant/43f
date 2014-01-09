@@ -163,6 +163,68 @@ it_fails_config_test_with_invalid_datestamp() {
 	test "$out" = "  ERROR! 'datestamp' value in config file is out of range!"
 }
 
+xit_does_create_year_directory_on_january_1st() {
+	success=0
+	
+	# temporarily change the date to the first of the year
+	y="$(date +%Y)"
+	start_date_test "%Y-%m-%d" "${y}-01-01"
+	
+	# do just a `43f run` and see if the new year directory was created
+	if ./43f -Nv -c tmp/temp.conf run; then
+		# was the year directory created?
+		if [ ! -d "tmp/$y" ]; then success=1; fi
+		# were the month directories created? (they should have been)
+		for (( i=1; i<=12; i++ )); do
+			printf -v m "%02i" "$i"
+			if [ ! -d "tmp/${y}/m${m}" ]; then success=1; fi
+		done
+		# were the day directories created? (they should have been)
+		for (( i=1; i<=31; i++ )); do
+			printf -v d "%02i" "$i"
+			if [ ! -d "tmp/${y}/d${d}" ]; then success=1; fi
+		done
+	else
+		success=1
+	fi
+	
+	# restore the date & time
+	stop_date_test
+	
+	return $success;
+}
+
+xit_does_not_create_year_directory_after_january_1st() {
+	success=0
+	
+	# temporarily change the date to the first of the year
+	y="$(date +%Y)"
+	start_date_test "%Y-%m-%d" "${y}-01-02"
+	
+	# do just a `43f run` and see if the new year directory was created
+	if ./43f -Nv -c tmp/temp.conf run; then
+		# was the year directory created?
+		if [ -d "tmp/$y" ]; then success=1; fi
+		# were the month directories created? (they should not have been)
+		for (( i=1; i<=12; i++ )); do
+			printf -v m "%02i" "$i"
+			if [ -d "tmp/${y}/m${m}" ]; then success=1; fi
+		done
+		# were the day directories created? (they should not have been)
+		for (( i=1; i<=31; i++ )); do
+			printf -v d "%02i" "$i"
+			if [ -d "tmp/${y}/d${d}" ]; then success=1; fi
+		done
+	else
+		success=1
+	fi
+	
+	# restore the date & time
+	stop_date_test
+	
+	return $success;
+}
+
 it_does_not_move_files_modified_today_from_todays_dir() {
 	y="$(date +%Y)"
 	printf -v d "d%02i" "$(( 10#$(date +%d) ))"
