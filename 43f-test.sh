@@ -2,6 +2,18 @@
 
 describe "43f"
 
+# temporarily set the date & time using the specified format string & value with the ability to restore the original date & time later (adjusted for the time spent with the temporary date & time)
+start_date_test() {
+	original_start_time=$(date +%s)
+	date -f "$1" "$2"
+	temp_start_time=$(date +%s)
+}
+
+# restore the original date & time from when start_date_test() was called (adjusted for the time spent in the temporary date & time)
+stop_date_test() {
+	date -f "%s" $(( $(date +%s) - $temp_start_time + $original_start_time ))
+}
+
 before() {
 	# make a temp dir
 	if [ ! -d tmp ]; then
@@ -191,6 +203,68 @@ it_imports_files_into_repository_months_to_keep_dirs() {
 	done
 	
 	return $success
+}
+
+xit_does_create_year_directory_on_january_1st() {
+	success=0
+	
+	# temporarily change the date to the first of the year
+	y="$(date +%Y)"
+	start_date_test "%Y-%m-%d" "${y}-01-01"
+	
+	# do just a `43f run` and see if the new year directory was created
+	if ./43f -Nv -c tmp/temp.conf run; then
+		# was the year directory created?
+		if [ ! -d "tmp/$y" ]; then success=1; fi
+		# were the month directories created? (they should have been)
+		for (( i=1; i<=12; i++ )); do
+			printf -v m "%02i" "$i"
+			if [ ! -d "tmp/${y}/m${m}" ]; then success=1; fi
+		done
+		# were the day directories created? (they should have been)
+		for (( i=1; i<=31; i++ )); do
+			printf -v d "%02i" "$i"
+			if [ ! -d "tmp/${y}/d${d}" ]; then success=1; fi
+		done
+	else
+		success=1
+	fi
+	
+	# restore the date & time
+	stop_date_test
+	
+	return $success;
+}
+
+xit_does_not_create_year_directory_after_january_1st() {
+	success=0
+	
+	# temporarily change the date to the first of the year
+	y="$(date +%Y)"
+	start_date_test "%Y-%m-%d" "${y}-01-02"
+	
+	# do just a `43f run` and see if the new year directory was created
+	if ./43f -Nv -c tmp/temp.conf run; then
+		# was the year directory created?
+		if [ -d "tmp/$y" ]; then success=1; fi
+		# were the month directories created? (they should not have been)
+		for (( i=1; i<=12; i++ )); do
+			printf -v m "%02i" "$i"
+			if [ -d "tmp/${y}/m${m}" ]; then success=1; fi
+		done
+		# were the day directories created? (they should not have been)
+		for (( i=1; i<=31; i++ )); do
+			printf -v d "%02i" "$i"
+			if [ -d "tmp/${y}/d${d}" ]; then success=1; fi
+		done
+	else
+		success=1
+	fi
+	
+	# restore the date & time
+	stop_date_test
+	
+	return $success;
 }
 
 it_does_not_move_files_modified_today_from_todays_dir() {

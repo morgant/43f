@@ -82,7 +82,8 @@ v0.1.2 - Fixed bug causing fatal error when moving files to month folder when
          destination month was greater than or equal to 8 (August).  
 v0.1.3 - Fixed bug causing file consolidation to fail for files in an October 
          month folder.  
-v0.1.4 - Fixed disk usage statistics calculation bugs.
+v0.1.4 - Fixed disk usage statistics calculation bugs.  
+v0.1.5 - Automatically create new year directory on 1st of year.  
 v0.2   - Added new `import command.
 
 ACKNOWLEDGEMENTS
@@ -100,7 +101,10 @@ the light of day otherwise.
 Development and troubleshooting was _greatly_ simplified by the use of Rocky 
 Bernstein's [`bashdb`](http://bashdb.sourceforge.net/) debugger for `bash`.
 
-Unit tests are implemented using [`roundup`](https://github.com/bmizerany/roundup).
+Functional tests are implemented using Blake Mizerany's [`roundup`](https://github.com/bmizerany/roundup).
+**NOTE:** Since 43f relies so heavily on date calculations, there are some
+functional tests that will change & restore your system's date & time, however
+these tests are disabled by default (look for `xit_` tests).
 
 LICENSE
 -------
