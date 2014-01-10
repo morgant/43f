@@ -30,6 +30,10 @@
 #                       Fixed disk usage statistics calculation bugs.
 # v0.1.5 - 2014-01-09 - Morgan Aldridge
 #                       Automatically create new year directory on 1st of year.
+# v0.1.6 - 2014-01-10 - Morgan Aldridge
+#                       Fixed bug causing daily files to moved to month folders
+#                       in current year instead of previous year when crossing
+#                       year boundary within past 31 days.
 # 
 # LICENSE:
 # 
@@ -58,7 +62,7 @@
 
 # info
 tool=$(basename "$0")
-version='0.1.5'
+version='0.1.6'
 copyright='Copyright (c) 2009-2014 Morgan Aldridge'
 
 # global variables
@@ -681,10 +685,10 @@ function init_repository_symlinks() {
 function roll_repository_daily_to_monthly() {
 	local success=true
 	local repo="$1"
-	local day="$2"
-	local month="$3"
-	local mtime_today="$4"	# also include files modified today? "true"/"false"
-	local year="$y"
+	local year="$2"
+	local day="$3"
+	local month="$4"
+	local mtime_today="$5"	# also include files modified today? "true"/"false"
 	
 	if does_repository_exist "$repo"; then
 		local src
@@ -895,7 +899,7 @@ function roll_repository_directories() {
 				if $verbose; then echo -n $'\n''  Processing...'; fi
 				
 				# move the contents of the day's directory to the appropriate month's directory
-				if roll_repository_daily_to_monthly "$repo" "$day" "$month" true; then
+				if roll_repository_daily_to_monthly "$repo" "$year" "$day" "$month" true; then
 					if $verbose; then echo "  Done."; fi
 				else
 					echo 'ERROR!'
@@ -930,7 +934,7 @@ function roll_repository_directories() {
 		printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
 		if $verbose; then echo -n "Processing directory '$day_dir'... "$'\n'"  Processing (special)... "; fi
 		# move the contents of the day's directory to the appropriate month's directory
-		if roll_repository_daily_to_monthly "$repo" "$day" "$month" false; then
+		if roll_repository_daily_to_monthly "$repo" "$year" "$day" "$month" false; then
 			if $verbose; then echo "  Done."; fi
 		else
 			echo 'ERROR!'
