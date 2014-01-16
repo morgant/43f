@@ -83,7 +83,11 @@ v0.1.2 - Fixed bug causing fatal error when moving files to month folder when
 v0.1.3 - Fixed bug causing file consolidation to fail for files in an October 
          month folder.  
 v0.1.4 - Fixed disk usage statistics calculation bugs.  
-v0.1.5 - Automatically create new year directory on 1st of year.
+v0.1.5 - Automatically create new year directory on 1st of year.  
+v0.1.6 - Fixed bug causing daily files to be moved to month folders in current
+         year instead of previous year when crossing year boundary within past
+         31 days. Fixed bug preventing files from being consolidated in monthly
+         folders from previous years.
 
 ACKNOWLEDGEMENTS
 ----------------
