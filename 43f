@@ -30,10 +30,12 @@
 #                       Fixed disk usage statistics calculation bugs.
 # v0.1.5 - 2014-01-09 - Morgan Aldridge
 #                       Automatically create new year directory on 1st of year.
-# v0.1.6 - 2014-01-10 - Morgan Aldridge
+# v0.1.6 - 2014-01-16 - Morgan Aldridge
 #                       Fixed bug causing daily files to moved to month folders
 #                       in current year instead of previous year when crossing
-#                       year boundary within past 31 days.
+#                       year boundary within past 31 days. Fixed bug preventing
+#                       files from being consolidated in monthly folders from
+#                       previous years.
 # 
 # LICENSE:
 # 
@@ -773,8 +775,8 @@ function roll_repository_monthly_to_monthly() {
 function consolidate_repository_monthly() {
 	local success=true
 	local repo="$1"
-	local month="$2"
-	local year="$y"
+	local year="$2"
+	local month="$3"
 	
 	if does_repository_exist "$repo"; then
 		local dir
@@ -985,7 +987,7 @@ function roll_repository_directories() {
 						notify "$repo" "ERROR" "A fatal error occurred while attempting to move the contents of '$month_dir' to '$keep_month_dir'!"
 						exit 1
 					fi
-				# if we've gone path the year to keep, then no need to continue
+				# if we've gone past the year to keep, then no need to continue
 				else
 					if $verbose; then echo 'Keeping.'; fi
 					break;
@@ -995,16 +997,19 @@ function roll_repository_directories() {
 		
 		# consolidate files in the monthly directories
 		if $success; then
-			for (( month=1; month <= 12; month++ )); do
-				printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
-				if $verbose; then echo -n "Consolidating files & directories in '$month_dir'... "; fi
-				if consolidate_repository_monthly "$repo" "$month"; then
-				    if $verbose; then echo "Done."; fi
-				else
-				    if $verbose; then echo "ERROR!"; fi
-				    notify "$repo" "ERROR" "An error occurred while consolidating files & directories in '${month_dir}'!"
-				fi
-			done
+			while IFS= read -r year; do
+			year="$(basename "$year")"
+				for (( month=12; month > 0; month-- )); do
+					printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
+					if $verbose; then echo -n "Consolidating files & directories in '$month_dir'... "; fi
+					if consolidate_repository_monthly "$repo" "$year" "$month"; then
+						if $verbose; then echo "Done."; fi
+					else
+						if $verbose; then echo "ERROR!"; fi
+						notify "$repo" "ERROR" "An error occurred while consolidating files & directories in '${month_dir}'!"
+					fi
+				done
+			done <<< "$(Efind "$repo" -mindepth 1 -maxdepth 1 -regex '.*/[0-9]{4}' | sort -nr)"
 		fi
 		
 		# finally, delete any year directories older than we're supposed to keep
