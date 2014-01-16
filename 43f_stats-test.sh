@@ -31,6 +31,7 @@ after() {
 it_does_calculate_disk_usage_stats_daily_minimum() {
 	# create daily files of random size (0-99 * block size) and do `43f stats`
 	./43f -N init tmp
+	./43f -N init tmp "$(date -j -v1y +%Y)"
 	block_size="$(stat -f "%k" tmp)"
 	unset min
 	today="$(date +%d)"
@@ -70,6 +71,7 @@ it_does_calculate_disk_usage_stats_daily_minimum() {
 it_does_calculate_disk_usage_stats_daily_median() {
 	# create daily files of random size (0-99 * block size) and do `43f stats`
 	./43f -N init tmp
+	./43f -N init tmp "$(date -j -v1y +%Y)"
 	block_size="$(stat -f "%k" tmp)"
 	sizes=()
 	today="$(date +%d)"
@@ -111,6 +113,7 @@ it_does_calculate_disk_usage_stats_daily_median() {
 it_does_calculate_disk_usage_stats_daily_maximum() {
 	# create daily files of random size (0-99 * block size) and do `43f stats`
 	./43f -N init tmp
+	./43f -N init tmp "$(date -j -v1y +%Y)"
 	block_size="$(stat -f "%k" tmp)"
 	unset max
 	today="$(date +%d)"
@@ -150,6 +153,7 @@ it_does_calculate_disk_usage_stats_daily_maximum() {
 it_does_calculate_disk_usage_stats_daily_mean() {
 	# create daily files of random size (0-99 * block size) and do `43f stats`
 	./43f -N init tmp
+	./43f -N init tmp "$(date -j -v1y +%Y)"
 	block_size="$(stat -f "%k" tmp)"
 	sum=0
 	today="$(date +%d)"
@@ -191,6 +195,7 @@ it_does_calculate_disk_usage_stats_daily_mean() {
 it_does_calculate_disk_usage_stats_monthly_minimum() {
 	# create monthly files of random size (0-99 * block size) and do `43f stats`
 	./43f -N init tmp
+	./43f -N init tmp "$(date -j -v1y +%Y)"
 	block_size="$(stat -f "%k" tmp)"
 	unset min
 	this_month="$(date +%m)"
@@ -228,6 +233,7 @@ it_does_calculate_disk_usage_stats_monthly_minimum() {
 it_does_calculate_disk_usage_stats_monthly_median() {
 	# create monthly files of random size (0-99 * block size) and do `43f stats`
 	./43f -N init tmp
+	./43f -N init tmp "$(date -j -v1y +%Y)"
 	block_size="$(stat -f "%k" tmp)"
 	sizes=()
 	this_month="$(date +%m)"
@@ -267,6 +273,7 @@ it_does_calculate_disk_usage_stats_monthly_median() {
 it_does_calculate_disk_usage_stats_monthly_maximum() {
 	# create monthly files of random size (0-99 * block size) and do `43f stats`
 	./43f -N init tmp
+	./43f -N init tmp "$(date -j -v1y +%Y)"
 	block_size="$(stat -f "%k" tmp)"
 	unset max
 	this_month="$(date +%m)"
@@ -304,6 +311,7 @@ it_does_calculate_disk_usage_stats_monthly_maximum() {
 it_does_calculate_disk_usage_stats_monthly_mean() {
 	# create monthly files of random size (0-99 * block size) and do `43f stats`
 	./43f -N init tmp
+	./43f -N init tmp "$(date -j -v1y +%Y)"
 	block_size="$(stat -f "%k" tmp)"
 	sum=0
 	this_month="$(date +%m)"

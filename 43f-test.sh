@@ -244,17 +244,20 @@ it_does_move_files_modified_last_month_from_todays_dir() {
 	
 	# create a file in today's directory (setting the creation/modification time to last month) and do `43f run`
 	./43f -N init tmp
-	touch -t "$(date -v-1m +%Y%m%d%H%M.%S)" "tmp/${y}/${d}/test_file"
+	./43f -N init tmp "$(date -j -v-1y +%Y)"
+	touch -t "$(date -j -v-1m +%Y%m%d%H%M.%S)" "tmp/${y}/${d}/test_file"
 	./43f -N -c tmp/temp.conf run
 	
 	# it should've been moved to last month's directory
-	printf -v m "m%02i" "$(( 10#$(date -v-1m +%m) ))"
+	y="$(date -j -v-1m +%Y)"
+	printf -v m "m%02i" "$(( 10#$(date -j -v-1m +%m) ))"
 	test -f "tmp/${y}/${m}/test_file"
 }
 
 it_does_not_move_files_within_days_to_keep_dirs() {
 	# create files in all the "to keep" day dirs and do `43f run`
 	./43f -N init tmp
+	./43f -N init tmp "$(date -j -v1y +%Y)"
 	today="$(date +%d)"
 	for (( i=0; i<7; i++ )); do
 		y="$(date +%Y)"
@@ -291,6 +294,7 @@ it_does_not_move_files_within_days_to_keep_dirs() {
 it_does_move_files_outside_days_to_keep_dirs() {
 	# create files in all the directories except the "to keep" day dirs and do `43f run`
 	./43f -N init tmp
+	./43f -N init tmp "$(date -j -v1y +%Y)"
 	today="$(date +%d)"
 	for (( i=7; i<31; i++ )); do
 		y="$(date +%Y)"
