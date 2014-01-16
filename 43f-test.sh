@@ -332,6 +332,22 @@ it_does_move_files_outside_days_to_keep_dirs() {
 	return $success
 }
 
+xit_does_move_files_outside_days_to_keep_dirs_across_year_boundary() {
+	success=0
+	
+	# temporarily change the date so the days to keep will straddle the year boundary
+	y="$(date +%Y)"
+	start_date_test "%Y-%m-%d" "${y}-01-05"
+	
+	# run the normal it_does_move_files_outside_days_to_keep_dirs() test
+	success=it_does_move_files_outside_days_to_keep_dirs_across_year_boundary
+	
+	# restore the date & time
+	stop_date_test
+	
+	return $success;
+}
+
 it_does_not_move_files_inside_months_to_keep_dirs() {
 	# set up the repository, incl. the previous year's directories
 	./43f -N init tmp
