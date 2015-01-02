@@ -225,6 +225,83 @@ xit_does_not_create_year_directory_after_january_1st() {
 	return $success;
 }
 
+it_does_create_convenience_symlinks() {
+	success=0
+	
+	# build the today, yesterday, and sunday-saturday paths to check symlinks against (remember, they should always be <= today)
+	printf -v today "tmp/%04i/d%02i" "$(( 10#$(date +%Y) ))" "$(( 10#$(date +%d) ))"
+	printf -v yesterday "tmp/%04i/d%02i" "$(( 10#$(date -j -v-1d +%Y) ))" "$(( 10#$(date -j -v-1d +%d) ))"
+	if [ "$(date +%A)" != "Sunday" ]; then
+		printf -v sunday "tmp/%04i/d%02i" "$(( 10#$(date -j -v-sunday +%Y) ))" "$(( 10#$(date -j -v-sunday +%d) ))"
+	else
+		printf -v sunday "tmp/%04i/d%02i" "$(( 10#$(date -j -v-1w +%Y) ))" "$(( 10#$(date -j -v-1w +%d) ))"
+	fi
+	if [ "$(date +%A)" != "Monday" ]; then
+		printf -v monday "tmp/%04i/d%02i" "$(( 10#$(date -j -v-monday +%Y) ))" "$(( 10#$(date -j -v-monday +%d) ))"
+	else
+		printf -v monday "tmp/%04i/d%02i" "$(( 10#$(date -j -v-1w +%Y) ))" "$(( 10#$(date -j -v-1w +%d) ))"
+	fi
+	if [ "$(date +%A)" != "Tuesday" ]; then
+		printf -v tuesday "tmp/%04i/d%02i" "$(( 10#$(date -j -v-tuesday +%Y) ))" "$(( 10#$(date -j -v-tuesday +%d) ))"
+	else
+		printf -v tuesday "tmp/%04i/d%02i" "$(( 10#$(date -j -v-1w +%Y) ))" "$(( 10#$(date -j -v-1w +%d) ))"
+	fi
+	if [ "$(date +%A)" != "Wednesday" ]; then
+		printf -v wednesday "tmp/%04i/d%02i" "$(( 10#$(date -j -v-wednesday +%Y) ))" "$(( 10#$(date -j -v-wednesday +%d) ))"
+	else
+		printf -v wednesday "tmp/%04i/d%02i" "$(( 10#$(date -j -v-1w +%Y) ))" "$(( 10#$(date -j -v-1w +%d) ))"
+	fi
+	if [ "$(date +%A)" != "Thursday" ]; then
+		printf -v thursday "tmp/%04i/d%02i" "$(( 10#$(date -j -v-thursday +%Y) ))" "$(( 10#$(date -j -v-thursday +%d) ))"
+	else
+		printf -v thursday "tmp/%04i/d%02i" "$(( 10#$(date -j -v-1w +%Y) ))" "$(( 10#$(date -j -v-1w +%d) ))"
+	fi
+	if [ "$(date +%A)" != "Friday" ]; then
+		printf -v friday "tmp/%04i/d%02i" "$(( 10#$(date -j -v-friday +%Y) ))" "$(( 10#$(date -j -v-friday +%d) ))"
+	else
+		printf -v friday "tmp/%04i/d%02i" "$(( 10#$(date -j -v-1w +%Y) ))" "$(( 10#$(date -j -v-1w +%d) ))"
+	fi
+	if [ "$(date +%A)" != "Saturday" ]; then
+		printf -v saturday "tmp/%04i/d%02i" "$(( 10#$(date -j -v-saturday +%Y) ))" "$(( 10#$(date -j -v-saturday +%d) ))"
+	else
+		printf -v saturday "tmp/%04i/d%02i" "$(( 10#$(date -j -v-1w +%Y) ))" "$(( 10#$(date -j -v-1w +%d) ))"
+	fi
+	
+	# do `43f run`
+	./43f -N init tmp
+	./43f -N -c tmp/temp.conf run
+	
+	# it should have created symlinks for today, yesterday, and sunday-saturday
+	if [ ! -L "tmp/today" -o "$today" != "$(readlink tmp/today)" ]; then
+		success=1
+	fi
+	if [ ! -L "tmp/yesterday" -o "$yesterday" != "$(readlink tmp/yesterday)" ]; then
+		success=1
+	fi
+	if [ ! -L "tmp/sunday" -o "$sunday" != "$(readlink tmp/sunday)" ]; then
+		success=1
+	fi
+		if [ ! -L "tmp/monday" -o "$monday" != "$(readlink tmp/monday)" ]; then
+		success=1
+	fi
+	if [ ! -L "tmp/tuesday" -o "$tuesday" != "$(readlink tmp/tuesday)" ]; then
+		success=1
+	fi
+	if [ ! -L "tmp/wednesday" -o "$wednesday" != "$(readlink tmp/wednesday)" ]; then
+		success=1
+	fi
+	if [ ! -L "tmp/thursday" -o "$thursday" != "$(readlink tmp/thursday)" ]; then
+		success=1
+	fi
+	if [ ! -L "tmp/friday" -o "$friday" != "$(readlink tmp/friday)" ]; then
+		success=1
+	fi
+	if [ ! -L "tmp/saturday" -o "$saturday" != "$(readlink tmp/saturday)" ]; then
+		success=1
+	fi
+	return $success
+}
+
 it_does_not_move_files_modified_today_from_todays_dir() {
 	y="$(date +%Y)"
 	printf -v d "d%02i" "$(( 10#$(date +%d) ))"
