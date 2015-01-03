@@ -89,7 +89,7 @@ v0.1.6 - Fixed bug causing daily files to be moved to month folders in current
          31 days. Fixed bug preventing files from being consolidated in monthly
          folders from previous years.  
 v0.1.7 - Fixed bug in Linux date parsing which failed for the month of October,
-         causing issues similar to those fixed in v0.1.3.
+         causing issues similar to those fixed in v0.1.3.  
 v0.1.8 - Fixed bug causing convenience symlinks to not correctly link to 
          previous year directories during the first week of January.
 
