@@ -3,7 +3,7 @@
 
 by Morgan Aldridge <morgant@makkintosshu.com>
 
-[![43f on Open Hub](https://www.openhub/p/makkintosshu-43f/widgets/project_thin_badge.gif)](https://www.openhub.net/p/makkintosshu-43f)
+[![43f on Open Hub](https://www.openhub.net/p/makkintosshu-43f/widgets/project_thin_badge.gif)](https://www.openhub.net/p/makkintosshu-43f)
 
 OVERVIEW
 --------
