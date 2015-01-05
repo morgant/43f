@@ -72,7 +72,7 @@
 
 # info
 tool=$(basename "$0")
-version='0.1.7'
+version='0.1.8'
 copyright='Copyright (c) 2009-2015 Morgan Aldridge'
 
 # global variables
