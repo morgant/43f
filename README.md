@@ -3,7 +3,7 @@
 
 by Morgan Aldridge <morgant@makkintosshu.com>
 
-[![43f on Open Hub](https://www.openhub.net/p/makkintosshu-43f/widgets/project_thin_badge.gif)](https://www.openhub.net/p/makkintosshu-43f)
+[![43f on OpenHub](https://www.openhub.net/p/makkintosshu-43f/widgets/project_thin_badge.gif)](https://www.openhub.net/p/makkintosshu-43f) [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=DBY3R8ARLDELE&currency_code=USD&source=url)
 
 OVERVIEW
 --------
