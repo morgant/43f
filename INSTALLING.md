@@ -19,27 +19,20 @@ Installation is currently a manual process, but fairly straightforward:
     
         cd 43f
     
-3. Install the `43f` script into `/usr/local/bin`:
+3. Install `43f` and the default configuration file into `/usr/local/`:
     
-        sudo mkdir -p /usr/local/bin
-        sudo install -b 43f /usr/local/bin/
+        sudo make install
     
-4. Copy the default configuration file into `/usr/local/etc/`:
-    
-        sudo mkdir -p /usr/local/etc
-        sudo cp 43f.conf.default /usr/local/etc/43f.conf
-    
-5. Edit the newly installed `/usr/local/etc/43f.conf` file to suit your needs
+4. Edit the newly installed `/usr/local/etc/43f.conf` file to suit your needs
     (esp. the `repository` value which you'll need for the next step).
-6. Initialize the `43f` repository (replacing `/path/to/repository` with the
+5. Initialize the `43f` repository (replacing `/path/to/repository` with the
     path to the directory where you would like `43f` to store & manage files):
     
         43f init /path/to/repository
     
-7. If you will use `launchd` to run `43f`'s nightly storage management process
+6. If you will use `launchd` to run `43f`'s nightly storage management process
     (highly suggested):
     
-        sudo cp com.makkintosshu.43f.plist.default /Library/LaunchDaemons/com.makkintosshu.43f.plist
         sudo launchctl load /Library/LaunchDaemons/com.makkintosshu.43f.plist
     
     Otherwise, if you prefer to use cron, then edit your preferred crontab
@@ -52,7 +45,7 @@ Installation is currently a manual process, but fairly straightforward:
     
         0 0 * * * /usr/local/bin/43f run
     
-8. That should do it. You should now be able to start storing files and/or
+7. That should do it. You should now be able to start storing files and/or
     directories in the daily and/or monthly directories within your `43f` 
     repository file structure (there are even `today`, `yesterday`, `sunday`,
     `monday`, `tuesday`, `wednesday`, `thursday`, `friday`, and `saturday` 
