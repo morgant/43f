@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # 
 # 43f - A simple date-based storage management utility based on the forty-three 
