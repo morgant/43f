@@ -21,6 +21,7 @@ Installation is currently a manual process, but fairly straightforward:
     
 3. Install `43f` and the default configuration file into `/usr/local/`:
     
+	./configure
         sudo make install
     
 4. Edit the newly installed `/usr/local/etc/43f.conf` file to suit your needs

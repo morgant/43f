@@ -22,11 +22,6 @@ of uses.
 therefore delete--files), so please proceed with caution, have a backup, 
 run the unit tests, and test thoroughly before deploying!
 
-INSTALLATION
-------------
-
-        ./configure && make install
-
 USAGE
 -----
 
