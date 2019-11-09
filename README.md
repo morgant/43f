@@ -99,6 +99,7 @@ v0.1.7 - Fixed bug in Linux date parsing which failed for the month of October,
          causing issues similar to those fixed in v0.1.3.  
 v0.1.8 - Fixed bug causing convenience symlinks to not correctly link to 
          previous year directories during the first week of January.
+v0.1.9 - Cross platform compatibility updates, esp. for OpenBSD.
 
 ACKNOWLEDGEMENTS
 ----------------
@@ -123,7 +124,7 @@ these tests are disabled by default (look for `xit_` tests).
 LICENSE
 -------
 
-Copyright (c) 2009-2015, Morgan Aldridge. All rights reserved.
+Copyright (c) 2009-2019, Morgan Aldridge. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without 
 modification, are permitted provided that the following conditions are met:
