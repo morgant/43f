@@ -1,0 +1,27 @@
+PREFIX = /usr/local
+
+INSTALL_DEPS = @@INSTALL_DEPS@@
+UNINSTALL_DEPS = @@UNINSTALL_DEPS@@
+
+all: install
+
+install_launchd:
+	cp com.makkintosshu.43f.plist.default /Library/LaunchDaemons/com.makkintosshu.43f.plist
+	@echo
+	@echo "Please run 'sudo launchctl load /Library/LaunchDaemons/com.makkintosshu.43f.plist' to install the LaunchDaemon"
+
+install: 43f 43f.conf.default $(INSTALL_DEPS)
+	mkdir -p $(PREFIX)/bin
+	install -m755 43f $(PREFIX)/bin
+	mkdir -p $(PREFIX)/etc
+	cp 43f.conf.default $(PREFIX)/etc/43f.conf
+	@echo
+	@echo "Please run '43f init /path/to/43f/repository' to initialize repository"
+
+uninstall_launchd:
+	launchctl unload /Library/LaunchDaemons/com.makkintosshu.43f.plist
+	rm /Library/LaunchDaemons/com.makkintosshu.43f.plist
+
+uninstall: $(UNINSTALL_DEPS)
+	rm $(PREFIX)/bin/43f
+	rm $(PREFIX)/etc/43f.conf

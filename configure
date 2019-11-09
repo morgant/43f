@@ -1,0 +1,14 @@
+#!/bin/sh
+
+uname="$(uname -s)"
+
+install_deps=""
+uninstall_deps=""
+if [ "$uname" = "Darwin" ]; then
+  install_deps="install_launchd"
+  uninstall_deps="uninstall_launchd"
+fi
+
+cp Makefile.in Makefile
+sed -i -e "s|@@INSTALL_DEPS@@|${install_deps}|" Makefile
+sed -i -e "s|@@UNINSTALL_DEPS@@|${uninstall_deps}|" Makefile
