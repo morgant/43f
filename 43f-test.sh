@@ -520,7 +520,7 @@ it_does_move_files_outside_months_to_keep_dirs() {
 	for (( i=6; i<12; i++ )); do
 		y="$(date +%Y)"
 		if (( ( 10#$this_month - $i ) > 0 )); then
-			printf -v m "m$02i" $(( 10#$this_month - $i ))
+			printf -v m "m%02i" $(( 10#$this_month - $i ))
 		else
 			printf -v m "m%02i"  $(( 12 - ( $i - 10#$this_month ) ))
 			y="$(( $y - 1 ))"
