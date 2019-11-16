@@ -148,7 +148,7 @@ function Efind() {
 # sed using extended regular expressions
 function Esed() {
 	case "$(uname)" in
-		Darwin)
+		Darwin|OpenBSD)
 			sed -E "$@"
 			;;
 		Linux)
@@ -194,6 +194,9 @@ function reldate() {
 				esac
 			fi
 			date -d "$adjust" "$format"
+			;;
+		OpenBSD)
+			dadd -f "${format#+}" "$(date "+%Y-%m-%d %H:%M:%S")" "$adjust"
 			;;
 	esac
 }
