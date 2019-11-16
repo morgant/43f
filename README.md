@@ -16,7 +16,7 @@ monthly file sets, and as many annual file sets as you would like. It is ideal
 for managing backup/snapshot sets, but should be flexible enough for any number 
 of uses.
 
-`43f` has been tested on Mac OS X and Linux.
+`43f` has been tested on Mac OS X and Linux, OpenBSD support is in-progress.
 
 **NOTE:** `43f` is a destructive utility (it is designed to manage--and
 therefore delete--files), so please proceed with caution, have a backup, 
@@ -67,6 +67,7 @@ Run `43f -h` or `43f --help` for further usage instructions.
 TO-DO
 -----
 
+    [ ] Migrate from `date` to [dateutils'](http://www.fresse.org/dateutils/) `dadd` for calculating relative dates on all platforms
     [ ] Add logging to `syslog` and/or a file
     [ ] Switch from a config file to a hidden .43f directory and .43f/config
          file within the repository (like many VCS/SCM implementations use)?

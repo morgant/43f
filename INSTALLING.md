@@ -6,6 +6,8 @@ SYSTEM REQUIREMENTS
 
 `43f` has been tested on Mac OS X and Linux and requires Bash 3+.
 
+_NOTE:_ On OpenBSD, the [dateutils](http://www.fresse.org/dateutils/) package is required for calculating relative dates. This may become a prerequisite on all platforms in the near future.
+
 BASIC INSTALLATION
 ------------------
 

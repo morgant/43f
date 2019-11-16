@@ -135,12 +135,17 @@ function version() {
 function Efind() {
 	local path="$1"
 	shift
+	local regex="$1"
+	shift
 	case "$(uname)" in
 		Darwin)
-			find -E "$path" "$@"
+			find -E "$path" -regex "$regex" "$@"
 			;;
 		Linux)
-			find "$path" -regextype posix-extended "$@"
+			find "$path" -regextype posix-extended -regex "$regex" "$@"
+			;;
+		OpenBSD)
+			find "$path" "$@" | grep -E "$regex"
 			;;
 	esac
 }
@@ -148,7 +153,7 @@ function Efind() {
 # sed using extended regular expressions
 function Esed() {
 	case "$(uname)" in
-		Darwin)
+		Darwin|OpenBSD)
 			sed -E "$@"
 			;;
 		Linux)
@@ -194,6 +199,9 @@ function reldate() {
 				esac
 			fi
 			date -d "$adjust" "$format"
+			;;
+		OpenBSD)
+			dadd -f "${format#+}" "$(date "+%Y-%m-%d %H:%M:%S")" "$adjust"
 			;;
 	esac
 }
@@ -872,7 +880,7 @@ function purge_year_directories() {
 			else
 				if $verbose; then echo "  Preserving $year directory."; fi
 			fi
-		done <<< "$(Efind "$repo" -mindepth 1 -maxdepth 1 -regex '.*/[0-9]{4}' | sort -nr)"
+		done <<< "$(Efind "$repo" '.*/[0-9]{4}' -mindepth 1 -maxdepth 1 | sort -nr)"
 		if $verbose; then echo -n "  "; fi
 	else
 		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
@@ -1008,7 +1016,7 @@ function roll_repository_directories() {
 					break;
 				fi
 			done
-		done <<< "$(Efind "$repo" -mindepth 1 -maxdepth 1 -regex '.*/[0-9]{4}' | sort -nr)"
+		done <<< "$(Efind "$repo" '.*/[0-9]{4}' -mindepth 1 -maxdepth 1 | sort -nr)"
 		
 		# consolidate files in the monthly directories
 		if $success; then
@@ -1024,7 +1032,7 @@ function roll_repository_directories() {
 						notify "$repo" "ERROR" "An error occurred while consolidating files & directories in '${month_dir}'!"
 					fi
 				done
-			done <<< "$(Efind "$repo" -mindepth 1 -maxdepth 1 -regex '.*/[0-9]{4}' | sort -nr)"
+			done <<< "$(Efind "$repo" '.*/[0-9]{4}' -mindepth 1 -maxdepth 1 | sort -nr)"
 		fi
 		
 		# finally, delete any year directories older than we're supposed to keep
