@@ -44,7 +44,7 @@
 #                       Fixed bug causing convenience symlinks to not correctly
 #                       link to previous year directories during the first week
 #                       of January.
-# v0.1.9 - 2019-11-09 - Morgan Aldridge
+# v0.1.9 - 2019-11-16 - Morgan Aldridge
 #                       Cross platform compatiblity improvements, esp. for
 #                       OpenBSD.
 # 
