@@ -95,7 +95,8 @@ v0.1.7 - Fixed bug in Linux date parsing which failed for the month of October,
          causing issues similar to those fixed in v0.1.3.  
 v0.1.8 - Fixed bug causing convenience symlinks to not correctly link to 
          previous year directories during the first week of January.  
-v0.1.9 - Cross platform compatibility updates, esp. for OpenBSD.
+v0.1.9 - Cross platform compatibility updates, esp. for OpenBSD.  
+v0.1.10 - Fix for OpenBSD compatibility when consolidating files.
 
 ACKNOWLEDGEMENTS
 ----------------
