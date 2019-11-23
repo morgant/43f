@@ -20,20 +20,24 @@ Installation is currently a manual process, but fairly straightforward:
 2. Change to the `43f` Git repository directory:
     
         cd 43f
+
+3. Optional, but suggested: run the test suite as follows (requires [`roundup`](http://bmizerany.github.io/roundup/)):
+
+        roundup test/*-test.sh
     
-3. Install `43f` and the default configuration file into `/usr/local/`:
+4. Install `43f` and the default configuration file into `/usr/local/`:
     
 	./configure
         sudo make install
     
-4. Edit the newly installed `/usr/local/etc/43f.conf` file to suit your needs
+5. Edit the newly installed `/usr/local/etc/43f.conf` file to suit your needs
     (esp. the `repository` value which you'll need for the next step).
-5. Initialize the `43f` repository (replacing `/path/to/repository` with the
+6. Initialize the `43f` repository (replacing `/path/to/repository` with the
     path to the directory where you would like `43f` to store & manage files):
     
         43f init /path/to/repository
     
-6. If you will use `launchd` to run `43f`'s nightly storage management process
+7. If you will use `launchd` to run `43f`'s nightly storage management process
     (highly suggested):
     
         sudo launchctl load /Library/LaunchDaemons/com.makkintosshu.43f.plist
@@ -48,7 +52,7 @@ Installation is currently a manual process, but fairly straightforward:
     
         0 0 * * * /usr/local/bin/43f run
     
-7. That should do it. You should now be able to start storing files and/or
+8. That should do it. You should now be able to start storing files and/or
     directories in the daily and/or monthly directories within your `43f` 
     repository file structure (there are even `today`, `yesterday`, `sunday`,
     `monday`, `tuesday`, `wednesday`, `thursday`, `friday`, and `saturday` 
