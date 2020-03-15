@@ -136,25 +136,6 @@ function version() {
 # inlcude functions from lib43f
 source ./lib43f
 
-# find using extended regular expressions
-function Efind() {
-	local path="$1"
-	shift
-	local regex="$1"
-	shift
-	case "$(uname)" in
-		Darwin)
-			find -E "$path" -regex "$regex" "$@"
-			;;
-		Linux)
-			find "$path" -regextype posix-extended -regex "$regex" "$@"
-			;;
-		OpenBSD)
-			find "$path" "$@" | grep -E "$regex"
-			;;
-	esac
-}
-
 # sed using extended regular expressions
 function Esed() {
 	case "$(uname)" in

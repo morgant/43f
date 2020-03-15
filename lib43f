@@ -1,2 +1,20 @@
 #!/usr/bin/env bash
 
+# find using extended regular expressions
+function Efind() {
+	local path="$1"
+	shift
+	local regex="$1"
+	shift
+	case "$(uname)" in
+		Darwin)
+			find -E "$path" -regex "$regex" "$@"
+			;;
+		Linux)
+			find "$path" -regextype posix-extended -regex "$regex" "$@"
+			;;
+		OpenBSD)
+			find "$path" "$@" | grep -E "$regex"
+			;;
+	esac
+}
