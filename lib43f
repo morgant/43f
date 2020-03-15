@@ -74,3 +74,62 @@ function reldate() {
 			;;
 	esac
 }
+
+# convert a date format string to a regular expression
+function parse_date_format_value() {
+	local success=true
+	local in_format="$1"
+	local in_date="$2"
+	local parse_sequence="$3"
+	local match_format="$in_format"
+
+	# build a regular expression based on the date format
+	# replace %Y with four digit year match
+	if [ "$parse_sequence" = "%Y" ]; then
+		match_format=$(echo -n "$match_format" | Esed "s/%Y/([0-9]{4})/g")
+	else
+		match_format=$(echo -n "$match_format" | Esed "s/%Y/[0-9]{4}/g")
+	fi
+	# replace %m with two digit month match
+	if [ "$parse_sequence" = "%m" ]; then
+		match_format=$(echo -n "$match_format" | Esed "s/%m/(0[123456789]|1[012])/g")
+	else
+		match_format=$(echo -n "$match_format" | Esed "s/%m/(?:0[123456789]|1[012])/g")
+	fi
+	# replace %d with two digit day match
+	if [ "$parse_sequence" = "%d" ]; then
+		match_format=$(echo -n "$match_format" | Esed "s/%d/(0[123456789]|[12][0-9]|3[01])/g")
+	else
+		match_format=$(echo -n "$match_format" | Esed "s/%d/(?:0[123456789]|[12][0-9]|3[01])/g")
+	fi
+	# replace %H with two digit hour match
+	if [ "$parse_sequence" = "%H" ]; then
+		match_format=$(echo -n "$match_format" | Esed "s/%H/([01][0-9]|2[0123])/g")
+	else
+		match_format=$(echo -n "$match_format" | Esed "s/%H/(?:[01][0-9]|2[0123])/g")
+	fi
+	# replace %M with two digit minute match
+	if [ "$parse_sequence" = "%M" ]; then
+		match_format=$(echo -n "$match_format" | Esed "s/%M/([012345][0-9])/g")
+	else
+		match_format=$(echo -n "$match_format" | Esed "s/%M/[012345][0-9]/g")
+	fi
+	# replace %S with two digit seconds match
+	if [ "$parse_sequence" = "%S" ]; then
+		match_format=$(echo -n "$match_format" | Esed "s/%M/([012345][0-9])/g")
+	else
+		match_format=$(echo -n "$match_format" | Esed "s/%M/[012345][0-9]/g")
+	fi
+	# replace %% with a single % (this should always be done last)
+	match_format=$(echo -n "$match_format" | Esed "s/%%/%/g")
+
+	# use the regex to parse the sequence out of the actual date (use grep with PCRE as we need to use non-capturing groups)
+	local parsed_sequence="$(perl -pe "s/${match_format}/\1/g" <<< "$in_date")"
+	if [ $? -eq 0 ]; then
+		echo -n "$parsed_sequence"
+	else
+		success=false
+	fi
+
+	$success;
+}
