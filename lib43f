@@ -133,3 +133,70 @@ function parse_date_format_value() {
 
 	$success;
 }
+
+# convert date strings
+function convdatestr() {
+	local in_format="$1"
+	local in_date="$2"
+	local out_format="$3"
+
+	case "$(uname)" in
+		Darwin|OpenBSD)
+			date -j -f "$in_format" "$in_date" "$out_format"
+			;;
+		Linux)
+			local has_year=false
+			local has_month=false
+			local has_day=false
+			local has_hour=false
+			local has_minute=false
+			local has_second=false
+			local year
+			local month
+			local day
+			local hour
+			local minute
+			local second
+			local tmp_date
+
+			# parse out custom date
+			if [[ "$in_format" =~ "%Y" ]]; then
+				has_year=true
+				year="$(parse_date_format_value "$in_format" "$in_date" "%Y")"
+			fi
+			if [[ "$in_format" =~ "%m" ]]; then
+				has_month=true
+				month="$(parse_date_format_value "$in_format" "$in_date" "%m")"
+			fi
+			if [[ "$in_format" =~ "%d" ]]; then
+				has_day=true
+				day="$(parse_date_format_value "$in_format" "$in_date" "%d")"
+			fi
+			if [[ "$in_format" =~ "%H" ]]; then
+				has_hour=true
+				hour="$(parse_date_format_value "$in_format" "$in_date" "%H")"
+			fi
+			if [[ "$in_format" =~ "%M" ]]; then
+				has_minute=true
+				minute="$(parse_date_format_value "$in_format" "$in_date" "%M")"
+			fi
+			if [[ "$in_format" =~ "%S" ]]; then
+				has_second=true
+				second="$(parse_date_format_value "$in_format" "$in_date" "%S")"
+			fi
+
+			# output the date into an intermediary format that Linux's date command understands
+			if $has_year && $has_month && $has_day; then
+				tmp_date="${year}-${month}-${day}"
+			fi
+			if $has_hour && $has_minute; then
+				tmp_date="${tmp_date} ${hour}:${minute}"
+				if $has_second; then
+					tmp_date="${tmp_date}:${second}"
+				fi
+			fi
+
+			date -d "$tmp_date" "$out_format"
+			;;
+	esac
+}
