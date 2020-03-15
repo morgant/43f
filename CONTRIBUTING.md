@@ -12,6 +12,7 @@ WHAT YOU NEED
 You will need the following to contribute:
 
 * A [GithHub](http://github.com) account for submitting pull requests
+* [dateutils](http://www.fresse.org/dateutils/)
 * [`roundup`](http://github.com/bmizerany/roundup) for running test cases
 
 And, optionally, but highly suggested:

@@ -21,7 +21,7 @@ Installation is currently a manual process, but fairly straightforward:
     
         cd 43f
 
-3. Optional, but suggested: run the test suite as follows (requires [`roundup`](http://bmizerany.github.io/roundup/)):
+3. Optional, but suggested: run the test suite as follows (requires [dateutils](http://www.fresse.org/dateutils/) & [`roundup`](http://bmizerany.github.io/roundup/)):
 
         roundup test/*-test.sh
     

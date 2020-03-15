@@ -30,3 +30,47 @@ function Esed() {
 			;;
 	esac
 }
+
+# calculate relative dates
+function reldate() {
+	local adjust="$1"
+	local format="$2"
+
+	case "$(uname)" in
+		Darwin)
+			date -v"${adjust}" "$format"
+			;;
+		Linux)
+			# convert BSD style adjustment to GNU style string
+			if [[ "$adjust" =~ ^([+-]?[0-9]+)([ymwdHMS])$ ]]; then
+				case "${BASH_REMATCH[2]}" in
+					y)
+						adjust="${BASH_REMATCH[1]} years"
+						;;
+					m)
+						adjust="${BASH_REMATCH[1]} months"
+						;;
+					w)
+						adjust="${BASH_REMATCH[1]} weeks"
+						;;
+					d)
+						adjust="${BASH_REMATCH[1]} days"
+						;;
+					H)
+						adjust="${BASH_REMATCH[1]} hours"
+						;;
+					M)
+						adjust="${BASH_REMATCH[1]} minutes"
+						;;
+					S)
+						adjust="${BASH_REMATCH[1]} seconds"
+						;;
+				esac
+			fi
+			date -d "$adjust" "$format"
+			;;
+		OpenBSD)
+			dadd -f "${format#+}" "$(date "+%Y-%m-%d %H:%M:%S")" "$adjust"
+			;;
+	esac
+}
