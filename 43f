@@ -136,18 +136,6 @@ function version() {
 # inlcude functions from lib43f
 source ./lib43f
 
-# sed using extended regular expressions
-function Esed() {
-	case "$(uname)" in
-		Darwin|OpenBSD)
-			sed -E "$@"
-			;;
-		Linux)
-			sed -r "$@"
-			;;
-	esac
-}
-
 # calculate relative dates
 function reldate() {
 	local adjust="$1"

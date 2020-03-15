@@ -18,3 +18,15 @@ function Efind() {
 			;;
 	esac
 }
+
+# sed using extended regular expressions
+function Esed() {
+	case "$(uname)" in
+		Darwin|OpenBSD)
+			sed -E "$@"
+			;;
+		Linux)
+			sed -r "$@"
+			;;
+	esac
+}
