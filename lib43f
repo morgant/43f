@@ -296,3 +296,17 @@ function load_config() {
 
  $success
 }
+
+# determine whether repository exists
+function does_repository_exist() {
+	local success
+	local repo
+	success=true
+	repo="$1"
+
+	if [ -z "$repo" -o ! -d "$repo" ]; then
+		success=false
+	fi
+
+	$success
+}

@@ -154,20 +154,6 @@ function notify() {
 	fi
 }
 
-# determine whether repository exists
-function does_repository_exist() {
-	local success
-	local repo
-	success=true
-	repo="$1"
-	
-	if [ -z "$repo" -o ! -d "$repo" ]; then
-		success=false
-	fi
-	
-	$success
-}
-
 # convert a date format string to a regular expression
 # 
 # # this and compare_date_stamped_filenames() use `sed`/`grep`, but should use something like http://sprunge.us/LZjS
