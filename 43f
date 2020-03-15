@@ -133,6 +133,9 @@ function version() {
 	echo "$tool v$version $copyright"
 }
 
+# inlcude functions from lib43f
+source ./lib43f
+
 # find using extended regular expressions
 function Efind() {
 	local path="$1"

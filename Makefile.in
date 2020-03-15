@@ -13,6 +13,7 @@ install_launchd:
 install: 43f 43f.conf.default $(INSTALL_DEPS)
 	mkdir -p $(PREFIX)/bin
 	install -m755 43f $(PREFIX)/bin
+	sed -i 's@source \.@source $(PREFIX)@g' $(PREFIX)/bin/43f
 	mkdir -p $(PREFIX)/etc
 	cp 43f.conf.default $(PREFIX)/etc/43f.conf
 	@echo
