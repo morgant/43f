@@ -644,3 +644,64 @@ function roll_repository_monthly_to_monthly() {
 
 	$success
 }
+
+function consolidate_repository_monthly() {
+	local success=true
+	local repo="$1"
+	local year="$2"
+	local month="$3"
+
+	if does_repository_exist "$repo"; then
+		local dir
+		printf -v dir "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
+		local last_file=''
+
+		# step through all the files and directories and look for any with the same name except for a datestamp
+		while IFS= read -r line; do
+			# don't bother processing an empty line
+			if [[ ( -n "$line" ) && ( "$line" != "$dir" ) ]]; then
+				# if we don't have another file to compare against, we can't do anything
+				if [ -n "$last_file" ]; then
+					if $verbose; then echo -n $'\n'"  Comparing '$last_file' with '$line'... "; fi
+					compare_date_stamped_filenames "$last_file" "$line"
+					local match=$?
+					# don't do anthing if the filenames don't match
+					if [ $match -eq 0 ]; then
+						if $verbose; then echo "NO MATCH!"; fi
+					# if the first file has a newer date stamp, then keep it and remove the second
+					elif [ $match -eq 1 ]; then
+						if $verbose; then echo -n "Keeping the former... "; fi
+						if $dry_run || rm -r "$line"; then
+							if $verbose; then echo "Done."; fi
+						else
+						    if $verbose; then echo "ERROR!"; fi
+						    notify "$repo" "ERROR" "An unknown error occurred while attempting to delete the '${line}' file/directory during consolidation of files in the '${dir}' directory!"
+						    success=false
+						fi
+					# if the second file has a newer date stamp, then keep it and remove the first
+					elif [ $match -eq 2 ]; then
+						if $verbose; then echo -n "Keeping the latter... "; fi
+						if $dry_run || rm -r "$last_file"; then
+							if $verbose; then echo "Done."; fi
+						else
+						    if $verbose; then echo "ERROR!"; fi
+						    notify "$repo" "ERROR" "An unknown error occurred while attempting to delete the '${last_file}' file/directory during consolidation of files in the '${dir}' directory!"
+						    success=false
+						fi
+					fi
+
+					if $verbose; then echo -n "    Done."$'\n'"  "; fi
+				fi
+
+				# store this filename to compare with the next one
+				last_file="$line"
+			fi
+		done <<< "$(find "$dir" -mindepth 1 -maxdepth 1 | sort)"
+	else
+		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
+		notify "$repo" "ERROR" "The '${repo}' repository doesn't exist!"
+		success=false
+	fi
+
+	$success
+}
