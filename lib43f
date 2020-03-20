@@ -557,3 +557,51 @@ function init_repository_symlinks() {
 
 	$success
 }
+
+function roll_repository_daily_to_monthly() {
+	local success=true
+	local repo="$1"
+	local year="$2"
+	local day="$3"
+	local month="$4"
+	local mtime_today="$5"	# also include files modified today? "true"/"false"
+
+	if does_repository_exist "$repo"; then
+		local src
+		local dst
+		local mtime=''
+		printf -v src "%s/%d/d%02d" "$repo" "$year" "$(( 10#$day ))"
+		printf -v dst "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
+		if $verbose; then echo -n $'\n'"    Moving files & directories from '$src' to '$dst' ("; fi
+		if $mtime_today; then
+			if $verbose; then echo -n "including"; fi
+		else
+			if $verbose; then echo -n "excluding"; fi
+			mtime='-mtime +0'
+		fi
+		if $verbose; then echo -n " those modified today)... "; fi
+
+		# step through all the matching (i.e. with or without a modification date of today) in the src dir and move them to dst
+		while IFS= read -r line; do
+			# don't bother processing an empty line or is the src directory itself
+			if [ -n "$line" ]; then
+				if $verbose; then echo -n $'\n'"      '$line'... "; fi
+				if $dry_run || mv "$line" "$dst/"; then
+					if $verbose; then echo "Done."; fi
+				else
+				    if $verbose; then echo "ERROR!"; fi
+				    notify "$repo" "ERROR" "An unknown error occurred while attempting to move the '${line}' file/directory into the '${dst}' directory!"
+				    success=false
+				fi
+			fi
+		done <<< "$(find "$src" -mindepth 1 -maxdepth 1 $mtime| sort)"
+
+		if $verbose; then echo "Done."; fi
+	else
+		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
+		notify "$repo" "ERROR" "The '${repo}' repository doesn't exist!"
+		success=false
+	fi
+
+	$success
+}
