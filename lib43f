@@ -705,3 +705,38 @@ function consolidate_repository_monthly() {
 
 	$success
 }
+
+function purge_year_directories() {
+	local success=true
+	local repo="$1"
+
+	if does_repository_exist "$repo"; then
+		if $verbose; then echo; fi
+		# calculate keep-through year
+		local keep_through=$(reldate -$(( ${config_keep_years} - 1 ))y +%Y)
+
+		# step through all the year directories that exist and delete any that are older than our "keep through" year
+		while IFS= read -r line; do
+			local year="$(basename "$line")"
+			if [[ "$year" =~ ^[0-9]{4}$ ]] && (( $year < $keep_through )); then
+				if $verbose; then echo -n "  Deleting $year directory... "; fi
+				if $dry_run || rm -r "${repo}/${year}"; then
+					if $verbose; then echo "Done."; fi
+				else
+					if $verbose; then echo "ERROR!"; fi
+					notify "$repo" "ERROR" "An unknown error occurred while attempting to delete the '${repo}/${year}' year directory while purging old annual directories!"
+					success=false
+				fi
+			else
+				if $verbose; then echo "  Preserving $year directory."; fi
+			fi
+		done <<< "$(Efind "$repo" '.*/[0-9]{4}' -mindepth 1 -maxdepth 1 | sort -nr)"
+		if $verbose; then echo -n "  "; fi
+	else
+		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
+		notify "$repo" "ERROR" "The '${repo}' repository doesn't exist!"
+		success=false
+	fi
+
+	$success
+}
