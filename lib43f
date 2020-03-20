@@ -376,3 +376,119 @@ function compare_date_stamped_filenames() {
 
 	return $match
 }
+
+# initialize the repository
+function init_repository() {
+	local success=true
+	local repo="$1"
+	local year="$2"
+
+	# default to this year (if one wasn't specified)
+	if [ -z "$year" ]; then
+		year="$y"
+	# otherwise, validate the year input
+	elif [[ ! "$year" =~ ^[0-9]{4}$ ]]; then
+		echo "ERROR! Cannot initialize repository with invalid year '$year'!"
+		notify "UNKNOWN" "ERROR" "Cannot initialize repository with invalid year '$year'!"
+		success=false
+	fi
+
+	# does the repository exist?
+	if [ -z "$repo" ]; then
+		echo 'ERROR! Cannot initialize repository with empty path!'
+		notify "UNKNOWN" "ERROR" "Cannot initialize repository with empty path!"
+		success=false
+	elif $success; then
+		if $verbose; then echo -n "Repository directory '$repo' "; fi
+		if does_repository_exist "$repo"; then
+			if $verbose; then echo 'exists.'; fi
+		else
+			if $verbose ; then echo -n 'does not exist. Creating... '; fi
+			if $dry_run || mkdir -p "$repo"; then
+				if $verbose; then echo 'Done.'; fi
+			else
+				if $verbose; then echo 'Error!'; fi
+				notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${repo}' repository directory!"
+				success=false
+			fi
+		fi
+	fi
+
+	# check for year subdirectory & create if necessary
+	if $success; then
+		year_dir="$repo/$year"
+		if $verbose ; then
+			printf "Year Directory '%s' " "$year_dir"
+		fi
+		if [ -d "$year_dir" ] ; then
+			if $verbose ; then
+				printf "exists.\n"
+			fi
+		else
+			if $verbose; then
+				printf "does not exist. Creating... "
+			fi
+			if $dry_run || mkdir "$year_dir" ; then
+				if $verbose ; then
+					printf "Done.\n"
+				fi
+			else
+				if $verbose ; then
+					printf "ERROR!\n"
+					notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${year_dir}' year directory!"
+				fi
+				success=false
+			fi
+		fi
+	fi
+
+	# step through the month directories, checking for them & creating as necessary
+	if $success; then
+		local month
+		for (( month=1; month<=12; month++ )); do
+			local month_dir
+			# check for month directory
+			printf -v month_dir "%s/%s/m%02d" "$repo" "$year" "$(( 10#$month ))"
+			if $verbose; then echo -n "Month Directory ${month_dir} "; fi
+			if [ -d "$month_dir" ]; then
+				if $verbose; then echo "exists."; fi
+			else
+				# create the month directory
+				if $verbose; then echo -n "does not exist. Creating... "; fi
+				if $dry_run || mkdir "$month_dir"; then
+					if $verbose; then echo "Done."; fi
+				else
+					if $verbose; then echo "ERROR!"; fi
+					notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${month_dir}' month directory!"
+					success=false
+				fi
+			fi
+		done
+	fi
+
+	# step through the day directories, checking for them & creating as necessary
+	if $success; then
+		local day
+		for (( day=1; day<=31; day++ )); do
+		      local day_dir
+		      # check for the day directory
+		      printf -v day_dir "%s/%s/d%02d" "$repo" "$year" "$(( 10#$day ))"
+		      if $verbose; then echo -n "Day Directory ${day_dir} "; fi
+		      if [ -d "$day_dir" ]; then
+		      	if $verbose; then echo "exists."; fi
+		      else
+		      	# create the day directory
+		      	if $verbose; then echo -n "does not exist. Creating... "; fi
+		      	if $dry_run || mkdir "$day_dir"; then
+		      		if $verbose; then echo "Done."; fi
+		      	else
+		      		if $verbose; then echo "ERROR!"; fi
+		      		notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${day_dir}' day directory!"
+		      		success=false
+		      	fi
+		      fi
+		done
+	fi
+
+	$success
+}
