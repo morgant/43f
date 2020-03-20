@@ -310,3 +310,33 @@ function does_repository_exist() {
 
 	$success
 }
+
+# convert a date format string to a regular expression
+#
+# # this and compare_date_stamped_filenames() use `sed`/`grep`, but should use something like http://sprunge.us/LZjS
+function date_format_to_regex() {
+	local success=true
+	local date_format="$1"
+
+	# replace %Y with four digit year match
+	date_format=$(echo -n "$date_format" | Esed "s/%Y/([0-9]{4})/g")
+
+	# replace %m with two digit month match
+	date_format=$(echo -n "$date_format" | Esed "s/%m/(0[123456789]|1[012])/g")
+
+	# replace %d with two digit day match
+	date_format=$(echo -n "$date_format" | Esed "s/%d/(0[123456789]|[12][0-9]|3[01])/g")
+
+	# replace %H with two digit hour match
+	date_format=$(echo -n "$date_format" | Esed "s/%H/([01][0-9]|2[0123])/g")
+
+	# replace %M/%S with two digit minute/second match
+	date_format=$(echo -n "$date_format" | Esed "s/(%M|%S)/([012345][0-9])/g")
+
+	# replace %% with a single % (this should always be done last)
+	date_format=$(echo -n "$date_format" | Esed "s/%%/%/g")
+
+	echo -n "$date_format"
+
+	$success;
+}
