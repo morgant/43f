@@ -605,3 +605,42 @@ function roll_repository_daily_to_monthly() {
 
 	$success
 }
+
+function roll_repository_monthly_to_monthly() {
+	local success=true
+	local repo="$1"
+	local year="$2"
+	local src_month="$3"
+	local dst_month="$4"
+
+	if does_repository_exist "$repo"; then
+		local src
+		local dst
+		printf -v src "%s/%d/m%02d" "$repo" "$year" "$src_month"
+		printf -v dst "%s/%d/m%02d" "$repo" "$year" "$dst_month"
+		if $verbose; then echo -n $'\n'"    Moving files & directories from '$src' to '$dst'... "; fi
+
+		# step through all the files in the src dir and move them to dst
+		while IFS= read -r line; do
+			# don't bother processing an empty line
+			if [ -n "$line" ]; then
+				if $verbose; then echo -n $'\n'"      '$line'... "; fi
+				if $dry_run || mv "$line" "$dst/"; then
+					if $verbose; then echo "Done."; fi
+				else
+					if $verbose; then echo "ERROR!"; fi
+					notify "$repo" "ERROR" "An unknown error occurred while attempting to move the '${line}' file/directory into the '${dst}' directory!"
+					success=false
+				fi
+			fi
+		done <<< "$(find "$src" -mindepth 1 -maxdepth 1 | sort)"
+
+		if $verbose; then echo "Done."; fi
+	else
+		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
+		notify "$repo" "ERROR" "The '${repo}' repository doesn't exist!"
+		success=false
+	fi
+
+	$success
+}
