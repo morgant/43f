@@ -154,42 +154,6 @@ function notify() {
 	fi
 }
 
-# compare two date stamped filenames (note: datestamp must match 
-# returns 0 for no match, 1 if string1's timestamp is higher, or 2 if string2's datestamp is higher
-# 
-# this and date_format_to_regex() use `sed`/`grep`, but should use something like http://sprunge.us/LZjS
-function compare_date_stamped_filenames() {
-	local match=0
-	local file1="$1"
-	local file2="$2"
-	local date_regex=$(date_format_to_regex "$config_date_format")
-	
-	# are the filenames the same length? we have to be dealing with the same date format here!
-	if [ ${#file1} -eq ${#file2} ]; then
-		# do our files have a datestamp matching our format?
-		if [[ "$file1" =~ $date_regex && "$file2" =~ $date_regex ]]; then
-			# do the filenames match if we strip out those datestamps?
-			local file1_stripped=$(echo -n "$file1" | Esed "s/${date_regex}//g")
-			local file2_stripped=$(echo -n "$file2" | Esed "s/${date_regex}//g")
-			if [ "$file1_stripped" = "$file2_stripped" ]; then
-				# now we compare the dates, fortunately we use `date` compatible date formats so this is
-				# straightforward to extract the date from the filename & convert to epoch time
-				local file1_date=$(echo -n "$file1" | grep -o -E "$date_regex")
-				local file2_date=$(echo -n "$file2" | grep -o -E "$date_regex")
-				file1_date="$(convdatestr "$config_date_format" "$file1_date" "+%s")"
-				file2_date="$(convdatestr "$config_date_format" "$file2_date" "+%s")"
-				if [ $file1_date -gt $file2_date ]; then
-					match=1
-				elif [ $file1_date -lt $file2_date ]; then
-					match=2
-				fi
-			fi
-		fi
-	fi
-	
-	return $match
-}
-
 # initialize the repository
 function init_repository() {
 	local success=true
