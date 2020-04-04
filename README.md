@@ -121,7 +121,7 @@ these tests are disabled by default (look for `xit_` tests).
 LICENSE
 -------
 
-Copyright (c) 2009-2019, Morgan Aldridge. All rights reserved.
+Copyright (c) 2009-2020, Morgan Aldridge. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without 
 modification, are permitted provided that the following conditions are met:
