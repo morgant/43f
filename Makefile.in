@@ -29,3 +29,6 @@ uninstall: $(UNINSTALL_DEPS)
 	rm $(PREFIX)/bin/43f
 	rm -r $(PREFIX)/share/43f
 	rm $(PREFIX)/etc/43f.conf
+
+clean:
+	rm Makefile
