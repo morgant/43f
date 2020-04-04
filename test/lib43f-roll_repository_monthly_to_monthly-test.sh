@@ -29,11 +29,11 @@ it_returns_false_with_empty_year() {
   ! roll_repository_monthly_to_monthly "tmp/43f" "" "12" "11"
 }
 
-it_returns_false_with_empty_day() {
+it_returns_false_with_empty_src_month() {
   ! roll_repository_monthly_to_monthly "tmp/43f" "2019" "" "11"
 }
 
-it_returns_false_with_empty_month() {
+it_returns_false_with_empty_dst_month() {
   ! roll_repository_monthly_to_monthly "tmp/43f" "2019" "12" ""
 }
 
