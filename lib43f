@@ -580,7 +580,7 @@ function init_repository_symlinks() {
 	success=true
 	repo="$1"
 
-	if does_repository_exist "$repo"; then
+	if does_repository_exist "$repo" && is_repository_initialized "$repo"; then
 		# create symlink for 'today'
 		local today_dir
 		local today
@@ -631,8 +631,8 @@ function init_repository_symlinks() {
 			fi
 		done
 	else
-		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
-		notify "$repo" "ERROR" "The '${repo}' repository doesn't exist!"
+		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist or isn't initialized!"; fi
+		notify "$repo" "ERROR" "The '${repo}' repository doesn't exist or isn't initialized!"
 		success=false
 	fi
 
