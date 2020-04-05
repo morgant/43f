@@ -150,6 +150,11 @@ function convdatestr() {
 	local in_date="$2"
 	local out_format="$3"
 
+	# input format string can't be empty
+	if [ -z "$in_format" ]; then
+		return 1
+	fi
+
 	case "$(uname)" in
 		Darwin|OpenBSD)
 			date -j -f "$in_format" "$in_date" "$out_format"
