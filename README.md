@@ -97,7 +97,8 @@ v0.1.8 - Fixed bug causing convenience symlinks to not correctly link to
          previous year directories during the first week of January.  
 v0.1.9 - Cross platform compatibility updates, esp. for OpenBSD.  
 v0.1.10 - Fix for OpenBSD compatibility when consolidating files.  
-v0.1.   - Don't create repository symlinks in dry-run mode.
+v0.1.   - Don't create repository symlinks in dry-run mode. Fix zero date
+          offset calculations on OpenBSD.
 
 ACKNOWLEDGEMENTS
 ----------------

@@ -70,7 +70,12 @@ function reldate() {
 			date -d "$adjust" "$format"
 			;;
 		OpenBSD)
-			dadd -f "${format#+}" "$(date "+%Y-%m-%d %H:%M:%S")" "$adjust"
+			# dadd doesn't handle zero offsets, so use date
+			if [[ "$adjust" =~ ^[+-]?0[ymwdHMS]$ ]]; then
+				date "$format"
+			else
+				dadd -f "${format#+}" "$(date "+%Y-%m-%d %H:%M:%S")" "$adjust"
+			fi
 			;;
 	esac
 }

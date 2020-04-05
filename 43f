@@ -50,7 +50,8 @@
 # v0.1.10- 2019-11-20 - Morgan Aldridge
 #                       Fix for OpenBSD compatibility when consolidating files.
 # v0.1.  -            - Morgan Aldridge
-#                       Don't create repository symlinks in dry-run mode.
+#                       Don't create repository symlinks in dry-run mode. Fix
+#                       zero date offset calculations on OpenBSD.
 # 
 # LICENSE:
 # 
