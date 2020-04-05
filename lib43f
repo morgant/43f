@@ -290,7 +290,7 @@ function load_config() {
      fi
      ;;
     days)
-     if (( ( "$val" >= 1 ) && ( "$val" <= 31 ) )); then
+     if valid_day "$val"; then
       config_keep_days="$val"
       if $verbose; then echo "  '$var' set to '$config_keep_days'."; fi
      else
@@ -300,7 +300,7 @@ function load_config() {
      fi
      ;;
     months)
-     if (( ( "$val" >= 1 ) && ( "$val" <= 12 ) )); then
+     if valid_month "$val"; then
       config_keep_months="$val"
       if $verbose; then echo "  '$var' set to '$config_keep_months'."; fi
      else
