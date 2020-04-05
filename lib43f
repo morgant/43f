@@ -216,6 +216,39 @@ function convdatestr() {
 	esac
 }
 
+# validate a day
+function valid_day() {
+	local success=false
+
+	if (( ( "$1" >= 1 ) && ( "$1" <= 31 ) )); then
+		success=true
+	fi
+
+	$success
+}
+
+# validate a month
+function valid_month() {
+	local success=false
+
+	if (( ( "$1" >= 1 ) && ( "$1" <= 12 ) )); then
+		success=true
+	fi
+
+	$success
+}
+
+# validate a year
+function valid_year() {
+	local success=false
+
+	if [[ "$1" =~ ^[0-9]{4}$ ]]; then
+		success=true
+	fi
+
+	$success
+}
+
 # load the config file
 function load_config() {
  local success
