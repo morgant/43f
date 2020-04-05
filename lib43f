@@ -36,6 +36,11 @@ function reldate() {
 	local adjust="$1"
 	local format="$2"
 
+	# format string must start with a plus symbol
+	if [[ "$format" =~ ^[^+] ]]; then
+		return 1
+	fi
+
 	case "$(uname)" in
 		Darwin)
 			date -v"${adjust}" "$format"
