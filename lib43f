@@ -245,7 +245,7 @@ function load_config() {
      fi
      ;;
     notify)
-     if echo "$val" | grep -q -i -E '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$' ; then
+     if echo "$val" | grep -q -i -E '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$' ; then
       config_notify_email="$val"
       if $verbose ; then
        printf "  '%s' set to '%s'.\n" "$var" "$config_notify_email"

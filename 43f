@@ -51,7 +51,8 @@
 #                       Fix for OpenBSD compatibility when consolidating files.
 # v0.1.  -            - Morgan Aldridge
 #                       Don't create repository symlinks in dry-run mode. Fix
-#                       zero date offset calculations on OpenBSD.
+#                       zero date offset calculations on OpenBSD. Support long
+#                       TLDs in `notify` lines in config file.
 # 
 # LICENSE:
 # 
