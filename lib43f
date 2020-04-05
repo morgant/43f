@@ -614,6 +614,10 @@ function roll_repository_daily_to_monthly() {
 	local month="$4"
 	local mtime_today="$5"	# also include files modified today? "true"/"false"
 
+	if ! valid_year "$year" || ! valid_day "$day" || ! valid_month "$month"; then
+		return 1
+	fi
+
 	if does_repository_exist "$repo"; then
 		local src
 		local dst
