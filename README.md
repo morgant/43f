@@ -99,7 +99,7 @@ v0.1.9 - Cross platform compatibility updates, esp. for OpenBSD.
 v0.1.10 - Fix for OpenBSD compatibility when consolidating files.  
 v0.1.   - Don't create repository symlinks in dry-run mode. Fix zero date
           offset calculations on OpenBSD. Support long TLDs in `notify` lines
-          in config file.
+          in config file. Improved functions input validation.
 
 ACKNOWLEDGEMENTS
 ----------------
