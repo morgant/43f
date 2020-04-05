@@ -5,11 +5,11 @@ source ./lib43f
 describe "lib43f reldate()"
 
 it_errors_with_no_adjustment_string() {
-  ! reldate "" "%d"
+  ! reldate "" "+%d"
 }
 
 it_doesnt_error_with_a_valid_adjustment_string() {
-  reldate "+1d" "%d"
+  reldate "+1d" "+%d"
 }
 
 it_errors_without_a_leading_plus_symbol_on_format_string() {
