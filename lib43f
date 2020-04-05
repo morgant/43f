@@ -359,6 +359,39 @@ function does_repository_exist() {
 	$success
 }
 
+# determine whether repository has been initialized
+function is_repository_initialized() {
+	local success=true
+	local repo="$1"
+
+	# check that year directory exists
+	if [ ! -d "${repo}/${y}" ]; then
+		success=false
+	fi
+
+	# check that month directories exist
+	local month
+	for (( month=1; month<=12; month++ )); do
+		local month_dir
+		printf -v month_dir "%s/%s/m%02i" "$repo" "$y" "$(( 10#$month ))"
+		if [ ! -d "$month_dir" ]; then
+			success=false
+		fi
+	done
+
+	# check that day directories exist
+	local day
+	for (( day=1; day<=31; day++ )); do
+		local day_dir
+		printf -v day_dir "%s/%s/d%02i" "$repo" "$y" "$(( 10#$day ))"
+		if [ ! -d "$day_dir" ]; then
+			success=false
+		fi
+	done
+
+	$success
+}
+
 # convert a date format string to a regular expression
 #
 # # this and compare_date_stamped_filenames() use `sed`/`grep`, but should use something like http://sprunge.us/LZjS
