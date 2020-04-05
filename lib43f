@@ -665,6 +665,10 @@ function roll_repository_monthly_to_monthly() {
 	local src_month="$3"
 	local dst_month="$4"
 
+	if ! valid_year "$year" || ! valid_month "$src_month" || ! valid_month "$dst_month"; then
+		return 1
+	fi
+
 	if does_repository_exist "$repo"; then
 		local src
 		local dst
