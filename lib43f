@@ -32,7 +32,7 @@ function Esed() {
 }
 
 # calculate relative dates
-function reldate() {
+function relative_to_now() {
 	local adjust="$1"
 	local format="$2"
 
@@ -599,8 +599,8 @@ function init_repository_symlinks() {
 		local yesterday_dir
 		local yesterday
 		local yesterday_year
-		yesterday=$(reldate -1d +%d)
-		yesterday_year=$(reldate -1d +%Y)
+		yesterday=$(relative_to_now -1d +%d)
+		yesterday_year=$(relative_to_now -1d +%Y)
 		yesterday_dir="$repo/${yesterday_year}/d${yesterday}"
 		if $verbose; then echo -n "Creating symlink for 'yesterday' pointing to '$yesterday_dir'... "; fi
 		if $dry_run || ln -f -n -s "$yesterday_dir" "$repo/yesterday"; then
@@ -617,10 +617,10 @@ function init_repository_symlinks() {
 		local weekday
 		local weekday_year
 		for (( i=1; i<=7; i++ )); do
-			weekday=$(reldate -${i}d +%d)
-			weekday_year=$(reldate -${i}d +%Y)
+			weekday=$(relative_to_now -${i}d +%d)
+			weekday_year=$(relative_to_now -${i}d +%Y)
 			weekday_dir="$repo/${weekday_year}/d${weekday}"
-			weekday_name=$(reldate -${i}d +%A | tr '[:upper:]' '[:lower:]')
+			weekday_name=$(relative_to_now -${i}d +%A | tr '[:upper:]' '[:lower:]')
 			if $verbose; then echo -n "Creating symlink for '$weekday_name' pointing to '$weekday_dir'... "; fi
 			if $dry_run || ln -f -n -s "$weekday_dir" "$repo/$weekday_name"; then
 				if $verbose; then echo 'Done.'; fi
@@ -802,7 +802,7 @@ function purge_year_directories() {
 	if does_repository_exist "$repo"; then
 		if $verbose; then echo; fi
 		# calculate keep-through year
-		local keep_through=$(reldate -$(( ${config_keep_years} - 1 ))y +%Y)
+		local keep_through=$(relative_to_now -$(( ${config_keep_years} - 1 ))y +%Y)
 
 		# step through all the year directories that exist and delete any that are older than our "keep through" year
 		while IFS= read -r line; do
@@ -837,13 +837,13 @@ function roll_repository_directories() {
 	if does_repository_exist "$repo"; then
 		# calculate today & keep-through dates
 		local today="$d"
-		local keep_through="$(reldate -$(( $config_keep_days - 1 ))d +%d)"
+		local keep_through="$(relative_to_now -$(( $config_keep_days - 1 ))d +%d)"
 		if $verbose; then echo "Keeping files through 'd${keep_through}'."; fi
 
 		# step through the day subdirectories and "process" those that are outside the range to preserve (starting with yesterday)
-		local year=$(reldate -1d +%Y)
-		local month=$(reldate -1d +%m)
-		local day=$(reldate -1d +%d)
+		local year=$(relative_to_now -1d +%Y)
+		local month=$(relative_to_now -1d +%m)
+		local day=$(relative_to_now -1d +%d)
 		local day_dir=''
 		local month_dir=''
 		while (( 10#$day != 10#$today )); do
@@ -909,8 +909,8 @@ function roll_repository_directories() {
 		fi
 
 		# calculate month keep-through & year dates
-		local keep_through_year="$(reldate -$((${config_keep_months} - 1))m +%Y)"
-		local keep_through_month="$(reldate -$((${config_keep_months} - 1))m +%m)"
+		local keep_through_year="$(relative_to_now -$((${config_keep_months} - 1))m +%Y)"
+		local keep_through_month="$(relative_to_now -$((${config_keep_months} - 1))m +%m)"
 
 		# step through the month subdirectories and "process" those that are outside the range to preserve (starting with this month)
 		local year=''
