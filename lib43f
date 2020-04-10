@@ -829,7 +829,7 @@ function roll_repository_directories() {
 		local keep_through
 		local last_months_days="$(days_in_previous_month)"
 		if (( $config_keep_days > $last_months_days  )); then
-			keep_through="$(relative_to_now -$(( $last_months_days - 1 )) +%d)"
+			keep_through="$(relative_to_now -$(( $last_months_days - 1 ))d +%d)"
 		else
 			keep_through="$(relative_to_now -$(( $config_keep_days - 1 ))d +%d)"
 		fi
