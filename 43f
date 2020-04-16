@@ -105,34 +105,34 @@ d=`date "+%d"`
 
 # print usage instructions (help)
 function usage() {
-	echo "Usage: $tool [-h|-t|-V] [-v] [-c file] COMMAND"
-	echo
-	echo 'Options:'
-	echo '  -v                   : verbose output'
-	echo '  -V, --version        : print the version number and exit'
-	echo '  -h, --help           : print these usage instructions and exit'
-	echo '  -c, --config=file    : specify an alternate config file'
-	echo '                DEFAULT: /usr/local/etc/43f.conf'
-	echo '  -t                   : check the config file and exit'
-	echo "  -n, --dry-run        : don't actually move/delete any files"
-	echo '  -N, --no-notify      : disable email notifications'
-	echo
-	echo 'Commands:'
-	echo '  init <path> [<year>] : initialize specified repository'
-	echo '  run                  : perform storage management'
-	echo '  stats                : print repository stats'
-	echo
-	echo 'Config File Options:'
-	echo '  repository           : absolute path to archive repository'
-	echo '                DEFAULT: /usr/local/var/db/43f'
-	echo '  notify               : email address(es) to send notifications to'
-	echo '                DEFAULT: root'
-	echo '  days                 : number of daily file sets to preserve (1-31)'
-	echo '                DEFAULT: 31'
-	echo '  months               : number of monthly file sets to preserve (1-12)'
-	echo '                DEFAULT: 12'
-	echo '  years                : number of annual file sets to preserve (1+)'
-	echo '                DEFAULT: 10'
+printf "Usage: $tool [-h|-t|-V] [-v] [-c file] COMMAND
+
+Options:
+  -v                   : verbose output
+  -V, --version        : print the version number and exit
+  -h, --help           : print these usage instructions and exit
+  -c, --config=file    : specify an alternate config file
+                DEFAULT: /usr/local/etc/43f.conf
+  -t                   : check the config file and exit
+  -n, --dry-run        : don't actually move/delete any files
+  -N, --no-notify      : disable email notifications
+
+Commands:
+  init <path> [<year>] : initialize specified repository
+  run                  : perform storage management
+  stats                : print repository stats
+
+Config File Options:
+  repository           : absolute path to archive repository
+                DEFAULT: /usr/local/var/db/43f
+  notify               : email address(es) to send notifications to
+                DEFAULT: root
+  days                 : number of daily file sets to preserve (1-31)
+                DEFAULT: 31
+  months               : number of monthly file sets to preserve (1-12)
+                DEFAULT: 12
+  years                : number of annual file sets to preserve (1+)
+                DEFAULT: 10"
 }						  
 
 # print version info
@@ -285,14 +285,14 @@ function get_monthly_usages() {
 			
 			# are we keeping a range that doesn't wrap (i.e. this month is greater than the month through which we're keeping)?
 			# or, are we keeping a range that wraps (i.e. the month through which we're keeping is greater than this month)?
-			if (( ( ( 10#$this_month >= 10#$keep_through ) && ( 10#$month >= 10#$keep_through ) && ( 10#$month <= 10#$this_month ) ) || ( ( 10#$this_month <= 10#$keep_through ) && ( ( 10#$month <= 10#$this_month ) || ( 10#$month >= 10#$keep_through ) ) ) )); then
+			if (( ( (10#$this_month >= 10#$keep_through) \
+				    && (10#$month >= 10#$keep_through) \
+				    && (10#$month <= 10#$this_month) ) \
+				  || ( (10#$this_month <= 10#$keep_through) \
+					   && ( (10#$month <= 10#$this_month) \
+						    || (10#$month >= 10#$keep_through))))); then
 				# calculate the usage, add to total, increment the counter
-				local usage=$(du_kb "$month_dir")
-				if [ $? -eq 0 ]; then
-					printf "%.0f" "$usage"
-				else
-					success=false
-				fi
+				local usage=$(du_kb "$month_dir") && printf "%.0f" "$usage" || success=false
 			fi
 			
 			# decrement the month & wrap around month and year if we've gone under
@@ -380,11 +380,7 @@ function calculate_repository_mean_usage() {
 	
 	# output the average
 	if $success; then
-		if [ $n -gt 0 ]; then
-			printf "%.0f" $(( total_usage/n ))
-		else
-			echo -n 0
-		fi
+		[ $n -gt 0 ] && printf "%.0f" $(( total_usage/n )) || echo -n 0
 	fi
 	
 	$success
