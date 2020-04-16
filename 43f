@@ -53,7 +53,9 @@
 #                       Don't create repository symlinks in dry-run mode or if
 #                       repo isn't initialized. Fix zero date offset calculations
 #                       on OpenBSD. Support long TLDs in `notify` lines in config
-#                       file. Improved functions input validation.
+#                       file. Improved functions input validation. Fix too few
+#                       days' data kept if previous month's length is less than
+#                       days to keep.
 # 
 # LICENSE:
 # 

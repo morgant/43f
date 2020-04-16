@@ -106,7 +106,8 @@ v0.1.10 - Fix for OpenBSD compatibility when consolidating files.
 v0.1.   - Don't create repository symlinks in dry-run mode or if repo isn't
           initialized. Fix zero date offset calculations on OpenBSD. Support
           long TLDs in `notify` lines in config file. Improved functions input
-          validation.
+          validation. Fix too few days' data kept if previous month's length
+          is less than days to keep.
 
 ACKNOWLEDGEMENTS
 ----------------
