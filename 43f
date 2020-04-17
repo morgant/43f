@@ -292,7 +292,12 @@ function get_monthly_usages() {
 					   && ( (10#$month <= 10#$this_month) \
 						    || (10#$month >= 10#$keep_through))))); then
 				# calculate the usage, add to total, increment the counter
-				local usage=$(du_kb "$month_dir") && printf "%.0f" "$usage" || success=false
+				local usage=$(du_kb "$month_dir")
+				if [ $? -eq 0 ]; then
+					printf "%.0f" "$usage"
+				else
+					success=false
+				fi
 			fi
 			
 			# decrement the month & wrap around month and year if we've gone under
