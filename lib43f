@@ -32,6 +32,9 @@ function Esed() {
 }
 
 # calculate dates relative to specified date
+# in_format & out_format accept a strftime() format
+# in_date is a date in the format specified in in_format
+# adjust accepts a `dadd` duration unit ('y', 'mo', 'd', 'h', 'm', or 's')
 function relative_date() {
 	local in_format="$1"
 	local in_date="$2"
@@ -49,7 +52,7 @@ function relative_date() {
 	fi
 
 	# dadd doesn't handle zero offsets, so use date
-	if [[ "$adjust" =~ ^[+-]?0[ymwdHMS]$ ]]; then
+	if [[ "$adjust" =~ ^[+-]?0(y|mo|d|h|m|s)$ ]]; then
 		dconv -f "${out_format#+}" -i "$in_format" "$in_date"
 	else
 		dadd -f "${out_format#+}" -i "$in_format" "$in_date" "$adjust"
@@ -922,8 +925,8 @@ function roll_repository_directories() {
 		fi
 
 		# calculate month keep-through & year dates
-		local keep_through_year="$(relative_to_now -$((${config_keep_months} - 1))m +%Y)"
-		local keep_through_month="$(relative_to_now -$((${config_keep_months} - 1))m +%m)"
+		local keep_through_year="$(relative_to_now -$((${config_keep_months} - 1))mo +%Y)"
+		local keep_through_month="$(relative_to_now -$((${config_keep_months} - 1))mo +%m)"
 
 		# step through the month subdirectories and "process" those that are outside the range to preserve (starting with this month)
 		local year=''

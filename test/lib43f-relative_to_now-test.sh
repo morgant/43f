@@ -46,26 +46,26 @@ it_adjusts_the_day_backward() {
 
 it_adjusts_the_month_by_zero_offset() {
   # without leading +/-
-  out="$(relative_to_now "0m" "+%m")"
+  out="$(relative_to_now "0mo" "+%m")"
   test "$out" = "$(date "+%m")"
 
   # with leading +
-  out="$(relative_to_now "+0m" "+%m")"
+  out="$(relative_to_now "+0mo" "+%m")"
   test "$out" = "$(date "+%m")"
 
   # with leading -
-  out="$(relative_to_now "-0m" "+%m")"
+  out="$(relative_to_now "-0mo" "+%m")"
   test "$out" = "$(date "+%m")"
 }
 
 it_adjusts_the_month_forward() {
-  out="$(relative_to_now "+1m" "+%m")"
-  test "$out" = "$(dadd -f "%m" "$(date "+%Y-%m-%d %H:%M:%S")" "+1m")"
+  out="$(relative_to_now "+1mo" "+%m")"
+  test "$out" = "$(dadd -f "%m" "$(date "+%Y-%m-%d %H:%M:%S")" "+1mo")"
 }
 
 it_adjusts_the_month_backward() {
-  out="$(relative_to_now "-1m" "+%m")"
-  test "$out" = "$(dadd -f "%m" "$(date "+%Y-%m-%d %H:%M:%S")" "-1m")"
+  out="$(relative_to_now "-1mo" "+%m")"
+  test "$out" = "$(dadd -f "%m" "$(date "+%Y-%m-%d %H:%M:%S")" "-1mo")"
 }
 
 it_adjusts_the_year_by_zero_offset() {
