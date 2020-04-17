@@ -56,6 +56,9 @@
 #                       file. Improved functions input validation. Fix too few
 #                       days' data kept if previous month's length is less than
 #                       days to keep.
+# v0.2.  - 2020-      - Morgan Aldridge
+#                       Fixed bug causing monthly archives to be incorrectly moved
+#                       to current month directory.
 # 
 # LICENSE:
 # 
