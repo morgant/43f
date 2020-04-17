@@ -105,7 +105,7 @@ d=`date "+%d"`
 
 # print usage instructions (help)
 function usage() {
-printf "Usage: $tool [-h|-t|-V] [-v] [-c file] COMMAND
+echo "Usage: $tool [-h|-t|-V] [-v] [-c file] COMMAND
 
 Options:
   -v                   : verbose output
