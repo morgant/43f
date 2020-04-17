@@ -636,7 +636,9 @@ function roll_repository_daily_to_monthly() {
 	local month="$4"
 	local mtime_today="$5"	# also include files modified today? "true"/"false"
 
-	if ! valid_year "$year" || ! valid_day "$day" || ! valid_month "$month"; then
+	if ! valid_year "$year" \
+		|| ! valid_day "$day" \
+		|| ! valid_month "$month"; then
 		return 1
 	fi
 
@@ -687,7 +689,9 @@ function roll_repository_monthly_to_monthly() {
 	local src_month="$3"
 	local dst_month="$4"
 
-	if ! valid_year "$year" || ! valid_month "$src_month" || ! valid_month "$dst_month"; then
+	if ! valid_year "$year" \
+		|| ! valid_month "$src_month" \
+		|| ! valid_month "$dst_month"; then
 		return 1
 	fi
 
@@ -796,7 +800,8 @@ function purge_year_directories() {
 		# step through all the year directories that exist and delete any that are older than our "keep through" year
 		while IFS= read -r line; do
 			local year="$(basename "$line")"
-			if [[ "$year" =~ ^[0-9]{4}$ ]] && (( $year < $keep_through )); then
+			if [[ "$year" =~ ^[0-9]{4}$ ]] \
+				&& (( $year < $keep_through )); then
 				if $verbose; then echo -n "  Deleting $year directory... "; fi
 				if $dry_run || rm -r "${repo}/${year}"; then
 					if $verbose; then echo "Done."; fi
@@ -848,10 +853,20 @@ function roll_repository_directories() {
 
 			if $verbose; then echo -n "Processing directory '$day_dir'... "; fi
 			# are we keeping a range that doesn't wrap (i.e. today is greater than the day through which we're keeping)?
-			if (( ( 10#$today >= 10#$keep_through ) && ( 10#$day >= 10#$keep_through ) && ( 10#$day <= 10#$today ) )); then
+			if (( \
+					( 10#$today >= 10#$keep_through ) \
+					&& ( 10#$day >= 10#$keep_through ) \
+					&& ( 10#$day <= 10#$today ) \
+				)); then
 				if $verbose; then echo 'Keeping.'; fi
 			# or, are we keeping a range that wraps (i.e. the day through which we're keeping is greater than today)?
-			elif (( ( 10#$today <= 10#$keep_through ) && ( ( 10#$day <= 10#$today ) || ( 10#$day >= 10#$keep_through ) ) )); then
+			elif (( \
+					( 10#$today <= 10#$keep_through ) \
+					&& ( \
+						( 10#$day <= 10#$today ) \
+						|| ( 10#$day >= 10#$keep_through ) \
+					) \
+				)); then
 				if $verbose; then echo 'Keeping.'; fi
 			# only process if this is outside the range to keep
 			else
@@ -882,7 +897,10 @@ function roll_repository_directories() {
 		done
 
 		# we always process today (but we have to be extra careful since there's the possibility new files have already been stashed in it)
-		if (( ( $year == $y ) && ( 10#$month == 10#$m ) )); then
+		if (( \
+				( $year == $y ) \
+				&& ( 10#$month == 10#$m ) \
+			)); then
 			month=$(( 10#$month - 1 ));
 			if (( 10#$month < 1 )); then
 				month=12
@@ -928,7 +946,13 @@ function roll_repository_directories() {
 
 				if $verbose; then echo -n "Processing directory '$month_dir'... "; fi
 				# are we we in a month that should be kept?
-				if (( ( $year > $keep_through_year ) || ( ( $year == $keep_through_year) && (10#$month >= 10#$keep_through_month) ) )); then
+				if (( \
+						( $year > $keep_through_year ) \
+						|| ( \
+							( $year == $keep_through_year) \
+							&& (10#$month >= 10#$keep_through_month) \
+						) \
+					)); then
 					if $verbose; then echo 'Keeping.'; fi
 				# otherwise, if the month is in the keep through year, we should move it to the keep through month
 				elif (( $year == $keep_through_year )); then
