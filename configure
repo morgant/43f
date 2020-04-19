@@ -10,5 +10,11 @@ if [ "$uname" = "Darwin" ]; then
 fi
 
 cp Makefile.in Makefile
-sed -i -e "s|@@INSTALL_DEPS@@|${install_deps}|" Makefile
-sed -i -e "s|@@UNINSTALL_DEPS@@|${uninstall_deps}|" Makefile
+if [ "$uname" = "Darwin" ]; then
+  sed -i '' "s|@@INSTALL_DEPS@@|${install_deps}|" Makefile
+  sed -i '' "s|@@UNINSTALL_DEPS@@|${uninstall_deps}|" Makefile
+  sed -i '' "s|sed -i|sed -i ''|g" Makefile
+else
+  sed -i "s|@@INSTALL_DEPS@@|${install_deps}|" Makefile
+  sed -i "s|@@UNINSTALL_DEPS@@|${uninstall_deps}|" Makefile
+fi
