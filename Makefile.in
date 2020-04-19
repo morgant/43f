@@ -17,9 +17,11 @@ install: 43f lib43f 43f.conf.default $(INSTALL_DEPS)
 	install -m755 lib43f $(PREFIX)/share/43f
 	sed -i 's@source \.@source $(PREFIX)/share/43f@g' $(PREFIX)/bin/43f
 	mkdir -p $(PREFIX)/etc
-	cp 43f.conf.default $(PREFIX)/etc/43f.conf
+	install 43f.conf.default $(PREFIX)/etc
 	@echo
-	@echo "Please run '43f init /path/to/43f/repository' to initialize repository"
+	@echo "For new installations, please copy $(PREFIX)/etc/43f.conf.default to $(PREFIX)/etc/43f.conf and edit as necessary"
+	@echo
+	@echo "Next, run '43f init /path/to/43f/repository' to initialize repository"
 
 uninstall_launchd:
 	launchctl unload /Library/LaunchDaemons/com.makkintosshu.43f.plist
@@ -28,7 +30,7 @@ uninstall_launchd:
 uninstall: $(UNINSTALL_DEPS)
 	rm $(PREFIX)/bin/43f
 	rm -r $(PREFIX)/share/43f
-	rm $(PREFIX)/etc/43f.conf
+	rm $(PREFIX)/etc/43f.conf.default
 
 clean:
 	rm Makefile
