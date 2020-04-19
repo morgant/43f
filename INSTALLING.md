@@ -28,8 +28,9 @@ Installation is currently a manual process, but fairly straightforward:
 	./configure
         sudo make install
     
-5. Edit the newly installed `/usr/local/etc/43f.conf` file to suit your needs
-    (esp. the `repository` value which you'll need for the next step).
+5. Copy the newly installed `/usr/local/etc/43f.conf.default` file to
+    `/usr/local/etc/43f.conf` and edit to suit your needs (esp. the
+    `repository` value which you'll need for the next step).
 6. Initialize the `43f` repository (replacing `/path/to/repository` with the
     path to the directory where you would like `43f` to store & manage files):
     
