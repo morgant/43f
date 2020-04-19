@@ -220,7 +220,7 @@ function get_daily_usages() {
 	if does_repository_exist "$repo"; then
 		# calculate today & keep-through dates
 		local today="$d"
-		local keep_through="$(reldate -$(( config_keep_days - 1 ))d +%d)"
+		local keep_through="$(relative_to_now -$(( config_keep_days - 1 ))d +%d)"
 		
 		# step through the subdirectories and calculate usage for those that are inside the range to preserve (starting with today)
 		local year="$y"
@@ -276,7 +276,7 @@ function get_monthly_usages() {
 	if does_repository_exist "$repo"; then
 		# calculate this month & keep through months
 		local this_month="$m"
-		local keep_through="$(reldate -$(( $config_keep_months - 1 ))m +%m)"
+		local keep_through="$(relative_to_now -$(( $config_keep_months - 1 ))mo +%m)"
 		
 		# step through the subdirectories and calculate usage for those that are inside the range to preserve (starting with this month)
 		local year="$y"
@@ -332,7 +332,7 @@ function get_annual_usages() {
 	if does_repository_exist "$repo"; then
 		# calculate this year & keep through years
 		local this_year="$y"
-		local keep_through="$(reldate -$(( $config_keep_years - 1 ))y +%Y)"
+		local keep_through="$(relative_to_now -$(( $config_keep_years - 1 ))y +%Y)"
 		
 		# step through the subdirectories and calculate usage
 		local year="$y"
