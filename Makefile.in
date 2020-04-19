@@ -15,7 +15,7 @@ install: 43f lib43f 43f.conf.default $(INSTALL_DEPS)
 	install -m755 43f $(PREFIX)/bin
 	mkdir -p $(PREFIX)/share/43f
 	install -m755 lib43f $(PREFIX)/share/43f
-	sed -i 's@source \.@source $(PREFIX)/share/43f@g' $(PREFIX)/bin/43f
+	sed -i '' 's@source \.@source $(PREFIX)/share/43f@g' $(PREFIX)/bin/43f
 	mkdir -p $(PREFIX)/etc
 	cp 43f.conf.default $(PREFIX)/etc/43f.conf
 	@echo
