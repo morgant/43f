@@ -59,6 +59,7 @@
 # v0.2.1 - 2020-04-18 - Morgan Aldridge
 #                       Fixed bug causing monthly archives to be incorrectly moved
 #                       to current month directory.
+# v0.2.2 - 2020-04-19 - Fixed errors in stats command.
 # 
 # LICENSE:
 # 
@@ -87,7 +88,7 @@
 
 # info
 tool=$(basename "$0")
-version='0.2.1'
+version='0.2.2'
 copyright='Copyright (c) 2009-2020 Morgan Aldridge'
 
 # global variables
