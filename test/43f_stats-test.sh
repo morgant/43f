@@ -18,6 +18,12 @@ months=6
 years=3
 datestamp=%Y-%m-%d
 EOF
+
+  # init 43f repo with 7 years of folders
+  y="$(date +%Y)"
+  for (( year=$y; year > $(( $y - 7 )); year-- )); do
+    ./43f -N -c tmp/temp.conf init tmp "$year"
+  done
 }
 
 after() {
@@ -30,8 +36,6 @@ after() {
 
 it_does_calculate_disk_usage_stats_daily_minimum() {
 	# create daily files of random size (0-99 * block size) and do `43f stats`
-	./43f -N init tmp
-	./43f -N init tmp "$(date -j -v1y +%Y)"
 	block_size="$(stat -f "%k" tmp)"
 	unset min
 	today="$(date +%d)"
@@ -70,8 +74,6 @@ it_does_calculate_disk_usage_stats_daily_minimum() {
 
 it_does_calculate_disk_usage_stats_daily_median() {
 	# create daily files of random size (0-99 * block size) and do `43f stats`
-	./43f -N init tmp
-	./43f -N init tmp "$(date -j -v1y +%Y)"
 	block_size="$(stat -f "%k" tmp)"
 	sizes=()
 	today="$(date +%d)"
@@ -112,8 +114,6 @@ it_does_calculate_disk_usage_stats_daily_median() {
 
 it_does_calculate_disk_usage_stats_daily_maximum() {
 	# create daily files of random size (0-99 * block size) and do `43f stats`
-	./43f -N init tmp
-	./43f -N init tmp "$(date -j -v1y +%Y)"
 	block_size="$(stat -f "%k" tmp)"
 	unset max
 	today="$(date +%d)"
@@ -152,8 +152,6 @@ it_does_calculate_disk_usage_stats_daily_maximum() {
 
 it_does_calculate_disk_usage_stats_daily_mean() {
 	# create daily files of random size (0-99 * block size) and do `43f stats`
-	./43f -N init tmp
-	./43f -N init tmp "$(date -j -v1y +%Y)"
 	block_size="$(stat -f "%k" tmp)"
 	sum=0
 	today="$(date +%d)"
@@ -194,8 +192,6 @@ it_does_calculate_disk_usage_stats_daily_mean() {
 
 it_does_calculate_disk_usage_stats_monthly_minimum() {
 	# create monthly files of random size (0-99 * block size) and do `43f stats`
-	./43f -N init tmp
-	./43f -N init tmp "$(date -j -v1y +%Y)"
 	block_size="$(stat -f "%k" tmp)"
 	unset min
 	this_month="$(date +%m)"
@@ -232,8 +228,6 @@ it_does_calculate_disk_usage_stats_monthly_minimum() {
 
 it_does_calculate_disk_usage_stats_monthly_median() {
 	# create monthly files of random size (0-99 * block size) and do `43f stats`
-	./43f -N init tmp
-	./43f -N init tmp "$(date -j -v1y +%Y)"
 	block_size="$(stat -f "%k" tmp)"
 	sizes=()
 	this_month="$(date +%m)"
@@ -272,8 +266,6 @@ it_does_calculate_disk_usage_stats_monthly_median() {
 
 it_does_calculate_disk_usage_stats_monthly_maximum() {
 	# create monthly files of random size (0-99 * block size) and do `43f stats`
-	./43f -N init tmp
-	./43f -N init tmp "$(date -j -v1y +%Y)"
 	block_size="$(stat -f "%k" tmp)"
 	unset max
 	this_month="$(date +%m)"
@@ -310,8 +302,6 @@ it_does_calculate_disk_usage_stats_monthly_maximum() {
 
 it_does_calculate_disk_usage_stats_monthly_mean() {
 	# create monthly files of random size (0-99 * block size) and do `43f stats`
-	./43f -N init tmp
-	./43f -N init tmp "$(date -j -v1y +%Y)"
 	block_size="$(stat -f "%k" tmp)"
 	sum=0
 	this_month="$(date +%m)"
@@ -354,7 +344,6 @@ it_does_calculate_disk_usage_stats_annual_minimum() {
 	unset min
 	for (( i=0; i<3; i++ )); do
 		y="$(( $(date +%Y) - $i ))"
-		./43f -N init tmp "$y"
 		size="$(( $RANDOM % 100 ))"
 		if [[ -z "$min" || "$size" -lt "$min" ]]; then
 			min="$size"
@@ -384,7 +373,6 @@ it_does_calculate_disk_usage_stats_annual_median() {
 	sizes=()
 	for (( i=0; i<3; i++ )); do
 		y="$(( $(date +%Y) - $i ))"
-		./43f -N init tmp "$y"
 		size="$(( $RANDOM % 100 ))"
 		sizes+=("$size")
 		dd if=/dev/zero of="tmp/${y}/$(( $size * ( $block_size / 1024 ) ))k_test_file" bs=$block_size count=$size > /dev/null
@@ -416,7 +404,6 @@ it_does_calculate_disk_usage_stats_annual_maximum() {
 	unset max
 	for (( i=0; i<3; i++ )); do
 		y="$(( $(date +%Y) - $i ))"
-		./43f -N init tmp "$y"
 		size="$(( $RANDOM % 100 ))"
 		if [[ -z "$max" || "$size" -gt "$max" ]]; then
 			max="$size"
@@ -446,7 +433,6 @@ it_does_calculate_disk_usage_stats_annual_mean() {
 	sum=0
 	for (( i=0; i<3; i++ )); do
 		y="$(( $(date +%Y) - $i ))"
-		./43f -N init tmp "$y"
 		size="$(( $RANDOM % 100 ))"
 		sum="$(( $sum + $size ))"
 		dd if=/dev/zero of="tmp/${y}/$(( $size * ( $block_size / 1024 ) ))k_test_file" bs=$block_size count=$size > /dev/null
