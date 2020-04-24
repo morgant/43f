@@ -24,6 +24,9 @@ EOF
   for (( year=$y; year > $(( $y - 7 )); year-- )); do
     ./43f -N -c tmp/temp.conf init tmp "$year"
   done
+
+	#block_size="$(stat -f "%k" tmp)"
+  block_size=512
 }
 
 after() {
@@ -36,7 +39,6 @@ after() {
 
 it_does_calculate_disk_usage_stats_daily_minimum() {
 	# create daily files of random size (0-99 * block size) and do `43f stats`
-	block_size="$(stat -f "%k" tmp)"
 	unset min
 	today="$(date +%d)"
 	for (( i=0; i<7; i++ )); do
@@ -74,7 +76,6 @@ it_does_calculate_disk_usage_stats_daily_minimum() {
 
 it_does_calculate_disk_usage_stats_daily_median() {
 	# create daily files of random size (0-99 * block size) and do `43f stats`
-	block_size="$(stat -f "%k" tmp)"
 	sizes=()
 	today="$(date +%d)"
 	for (( i=0; i<7; i++ )); do
@@ -114,7 +115,6 @@ it_does_calculate_disk_usage_stats_daily_median() {
 
 it_does_calculate_disk_usage_stats_daily_maximum() {
 	# create daily files of random size (0-99 * block size) and do `43f stats`
-	block_size="$(stat -f "%k" tmp)"
 	unset max
 	today="$(date +%d)"
 	for (( i=0; i<7; i++ )); do
@@ -152,7 +152,6 @@ it_does_calculate_disk_usage_stats_daily_maximum() {
 
 it_does_calculate_disk_usage_stats_daily_mean() {
 	# create daily files of random size (0-99 * block size) and do `43f stats`
-	block_size="$(stat -f "%k" tmp)"
 	sum=0
 	today="$(date +%d)"
 	for (( i=0; i<7; i++ )); do
@@ -192,7 +191,6 @@ it_does_calculate_disk_usage_stats_daily_mean() {
 
 it_does_calculate_disk_usage_stats_monthly_minimum() {
 	# create monthly files of random size (0-99 * block size) and do `43f stats`
-	block_size="$(stat -f "%k" tmp)"
 	unset min
 	this_month="$(date +%m)"
 	for (( i=0; i<6; i++ )); do
@@ -228,7 +226,6 @@ it_does_calculate_disk_usage_stats_monthly_minimum() {
 
 it_does_calculate_disk_usage_stats_monthly_median() {
 	# create monthly files of random size (0-99 * block size) and do `43f stats`
-	block_size="$(stat -f "%k" tmp)"
 	sizes=()
 	this_month="$(date +%m)"
 	for (( i=0; i<6; i++ )); do
@@ -266,7 +263,6 @@ it_does_calculate_disk_usage_stats_monthly_median() {
 
 it_does_calculate_disk_usage_stats_monthly_maximum() {
 	# create monthly files of random size (0-99 * block size) and do `43f stats`
-	block_size="$(stat -f "%k" tmp)"
 	unset max
 	this_month="$(date +%m)"
 	for (( i=0; i<6; i++ )); do
@@ -302,7 +298,6 @@ it_does_calculate_disk_usage_stats_monthly_maximum() {
 
 it_does_calculate_disk_usage_stats_monthly_mean() {
 	# create monthly files of random size (0-99 * block size) and do `43f stats`
-	block_size="$(stat -f "%k" tmp)"
 	sum=0
 	this_month="$(date +%m)"
 	for (( i=0; i<6; i++ )); do
@@ -339,8 +334,7 @@ it_does_calculate_disk_usage_stats_monthly_mean() {
 #
 
 it_does_calculate_disk_usage_stats_annual_minimum() {
-	# create annual files of random size (-99 * block size) and do `43f stats`
-	block_size="$(stat -f "%k" tmp)"
+	# create annual files of random size (0-99 * block size) and do `43f stats`
 	unset min
 	for (( i=0; i<3; i++ )); do
 		y="$(( $(date +%Y) - $i ))"
@@ -368,8 +362,7 @@ it_does_calculate_disk_usage_stats_annual_minimum() {
 }
 
 it_does_calculate_disk_usage_stats_annual_median() {
-	# create annual files of random size (-99 * block size) and do `43f stats`
-	block_size="$(stat -f "%k" tmp)"
+	# create annual files of random size (0-99 * block size) and do `43f stats`
 	sizes=()
 	for (( i=0; i<3; i++ )); do
 		y="$(( $(date +%Y) - $i ))"
@@ -399,8 +392,7 @@ it_does_calculate_disk_usage_stats_annual_median() {
 }
 
 it_does_calculate_disk_usage_stats_annual_maximum() {
-	# create annual files of random size (-99 * block size) and do `43f stats`
-	block_size="$(stat -f "%k" tmp)"
+	# create annual files of random size (0-99 * block size) and do `43f stats`
 	unset max
 	for (( i=0; i<3; i++ )); do
 		y="$(( $(date +%Y) - $i ))"
@@ -413,10 +405,10 @@ it_does_calculate_disk_usage_stats_annual_maximum() {
 	output="$(./43f -N -c tmp/temp.conf stats | grep Annual -A 4 | grep Maximum)"
 	success=$?
 	
-	# was the calculated minimum the same as our known minimum?
+	# was the calculated maximum the same as our known maximum?
 	if [ $success -eq 0 ]; then
 		if [[ "$output" =~ Maximum:\ +([0-9]+)(.[0-9]+)?K?B ]]; then
-			if (( ( ${BASH_REMATCH[1]} / ( $block_size / 1024 ) ) != $min )); then
+			if (( ( ${BASH_REMATCH[1]} / ( $block_size / 1024 ) ) != $max )); then
 				success=1
 			fi
 		else
@@ -428,8 +420,7 @@ it_does_calculate_disk_usage_stats_annual_maximum() {
 }
 
 it_does_calculate_disk_usage_stats_annual_mean() {
-	# create annual files of random size (-99 * block size) and do `43f stats`
-	block_size="$(stat -f "%k" tmp)"
+	# create annual files of random size (0-99 * block size) and do `43f stats`
 	sum=0
 	for (( i=0; i<3; i++ )); do
 		y="$(( $(date +%Y) - $i ))"
@@ -440,7 +431,7 @@ it_does_calculate_disk_usage_stats_annual_mean() {
 	output="$(./43f -N -c tmp/temp.conf stats | grep Annual -A 4 | grep Average)"
 	success=$?
 	
-	# was the calculated minimum the same as our known minimum?
+	# was the calculated mean the same as our known mean?
 	if [ $success -eq 0 ]; then
 		if [[ "$output" =~ Average:\ +([0-9]+)(.[0-9]+)?K?B ]]; then
 			if (( ( ${BASH_REMATCH[1]} / ( $block_size / 1024 ) ) != ( $sum / 3 ) )); then
