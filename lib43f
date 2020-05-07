@@ -577,9 +577,9 @@ function init_repository_symlinks() {
 		local today_dir
 		local today
 		today="$d"
-		today_dir="$repo/$y/d${today}"
+		today_dir="${repo}/${y}/d${today}"
 		if $verbose; then echo -n "Creating symlink for 'today' pointing to '$today_dir'... "; fi
-		if $dry_run || ln -f -n -s "$today_dir" "$repo/today"; then
+		if $dry_run || ln -f -n -s "$today_dir" "${repo}/today"; then
 			if $verbose; then echo 'Done.'; fi
 		else
 			if $verbose; then echo 'ERROR!'; fi
@@ -593,9 +593,9 @@ function init_repository_symlinks() {
 		local yesterday_year
 		yesterday=$(relative_to_now -1d +%d)
 		yesterday_year=$(relative_to_now -1d +%Y)
-		yesterday_dir="$repo/${yesterday_year}/d${yesterday}"
+		yesterday_dir="${repo}/${yesterday_year}/d${yesterday}"
 		if $verbose; then echo -n "Creating symlink for 'yesterday' pointing to '$yesterday_dir'... "; fi
-		if $dry_run || ln -f -n -s "$yesterday_dir" "$repo/yesterday"; then
+		if $dry_run || ln -f -n -s "$yesterday_dir" "${repo}/yesterday"; then
 			if $verbose; then echo 'Done.'; fi
 		else
 			if $verbose; then echo 'ERROR!'; fi
@@ -611,10 +611,10 @@ function init_repository_symlinks() {
 		for (( i=1; i<=7; i++ )); do
 			weekday=$(relative_to_now -${i}d +%d)
 			weekday_year=$(relative_to_now -${i}d +%Y)
-			weekday_dir="$repo/${weekday_year}/d${weekday}"
+			weekday_dir="${repo}/${weekday_year}/d${weekday}"
 			weekday_name=$(relative_to_now -${i}d +%A | tr '[:upper:]' '[:lower:]')
 			if $verbose; then echo -n "Creating symlink for '$weekday_name' pointing to '$weekday_dir'... "; fi
-			if $dry_run || ln -f -n -s "$weekday_dir" "$repo/$weekday_name"; then
+			if $dry_run || ln -f -n -s "$weekday_dir" "${repo}/${weekday_name}"; then
 				if $verbose; then echo 'Done.'; fi
 			else
 				if $verbose; then echo 'ERROR!'; fi
