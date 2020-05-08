@@ -65,7 +65,7 @@ function relative_to_now() {
 	local out_format="$2"
 
 	# out_format string must start with a plus symbol
-	if [[ "$out_format" =~ ^[^+] ]]; then
+	if [[ (-z "$out_format") || ("$out_format" =~ ^[^+]) ]]; then
 		return 1
 	fi
 
