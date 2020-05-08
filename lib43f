@@ -260,7 +260,7 @@ function load_config() {
     repository)
      if [ -n "$val" -a -d "$val" ]; then
       config_repository="$val"
-      $verbose && printf "  '%s' set to '%s'.\n" "$var" "$config_repository"
+      $verbose && echo "  '${var}' set to '${config_repository}'."
      else
       printf "  ERROR! '%s' value in config file is either invalid or not a directory! You may need to run '43f init' to initialize the repository.\n" "$var"
       notify "UNKNOWN" "ERROR" "'${var}' value in '${config_file} configuration file is either invalid or is not a directory! You may need to run '43f init' to initialize the repository."
@@ -270,7 +270,7 @@ function load_config() {
     notify)
      if echo "$val" | grep -q -i -E '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$' ; then
       config_notify_email="$val"
-      $verbose && printf "  '%s' set to '%s'.\n" "$var" "$config_notify_email"
+      $verbose && echo "  '${var}' set to '${config_notify_email}'."
      else
       printf "  ERROR! '%s' value in config file is not a valid email address!\n" "$var"
       notify "UNKNOWN" "ERROR" "'${var}' value in '${config_file}' configuration file is not a valid email address!"
@@ -486,15 +486,15 @@ function init_repository() {
 	# check for year subdirectory & create if necessary
 	if $success; then
 		year_dir="$repo/$year"
-		$verbose && printf "Year Directory '%s' " "$year_dir"
+		$verbose && echo -n "Year Directory '${year_dir}' "
 		if [ -d "$year_dir" ] ; then
-			$verbose && printf "exists.\n"
+			$verbose && echo "exists."
 		else
-			$verbose && printf "does not exist. Creating... "
+			$verbose && echo -n "does not exist. Creating... "
 			if $dry_run || mkdir "$year_dir" ; then
-				$verbose && printf "Done.\n"
+				$verbose && echo "Done."
 			else
-				$verbose && printf "ERROR!\n"
+				$verbose && echo "ERROR!"
 				notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${year_dir}' year directory!"
 				success=false
 			fi
