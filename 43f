@@ -805,7 +805,7 @@ if [ $# -gt 0 ]; then
 						fi
 						
 						# update convenience symlinks
-						$verbose && echo -n "Updating convenience symlinks in repository '${config_repository}'... "
+						$verbose && echo "Updating convenience symlinks in repository '${config_repository}'..."
 						if init_repository_symlinks "$config_repository"; then
 							$verbose && echo 'Done.'
 						else
@@ -815,7 +815,7 @@ if [ $# -gt 0 ]; then
 						fi
 						
 						# roll the file sets in the directories
-						$verbose && echo -n "Processing directories in repository '${config_repository}'... "
+						$verbose && echo "Processing directories in repository '${config_repository}'..."
 						if roll_repository_directories "$config_repository"; then
 							$verbose && echo 'Done.'
 						else
