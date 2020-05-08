@@ -251,7 +251,7 @@ function load_config() {
  config_file="$1"
  # does the config file exist?
  if [ -n "$config_file" -a -e "$config_file" ]; then
-  if $verbose; then echo "Loading config file '${config_file}'..."; fi
+  $verbose && echo "Loading config file '${config_file}'..."
   while IFS== read var val; do
    case "$var" in
     \#*)
@@ -260,9 +260,7 @@ function load_config() {
     repository)
      if [ -n "$val" -a -d "$val" ]; then
       config_repository="$val"
-      if $verbose ; then
-       printf "  '%s' set to '%s'.\n" "$var" "$config_repository"
-      fi
+      $verbose && printf "  '%s' set to '%s'.\n" "$var" "$config_repository"
      else
       printf "  ERROR! '%s' value in config file is either invalid or not a directory! You may need to run '43f init' to initialize the repository.\n" "$var"
       notify "UNKNOWN" "ERROR" "'${var}' value in '${config_file} configuration file is either invalid or is not a directory! You may need to run '43f init' to initialize the repository."
@@ -272,9 +270,7 @@ function load_config() {
     notify)
      if echo "$val" | grep -q -i -E '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$' ; then
       config_notify_email="$val"
-      if $verbose ; then
-       printf "  '%s' set to '%s'.\n" "$var" "$config_notify_email"
-      fi
+      $verbose && printf "  '%s' set to '%s'.\n" "$var" "$config_notify_email"
      else
       printf "  ERROR! '%s' value in config file is not a valid email address!\n" "$var"
       notify "UNKNOWN" "ERROR" "'${var}' value in '${config_file}' configuration file is not a valid email address!"
@@ -284,7 +280,7 @@ function load_config() {
     days)
      if valid_day "$val"; then
       config_keep_days="$val"
-      if $verbose; then echo "  '$var' set to '$config_keep_days'."; fi
+      $verbose && echo "  '$var' set to '$config_keep_days'."
      else
       echo "  ERROR! '$var' value in config file is out of range (1-31)!"
       notify "UNKNOWN" "ERROR" "'${var}' value in '${config_file}' configuration file is out of range (1-31)!"
@@ -294,7 +290,7 @@ function load_config() {
     months)
      if valid_month "$val"; then
       config_keep_months="$val"
-      if $verbose; then echo "  '$var' set to '$config_keep_months'."; fi
+      $verbose && echo "  '$var' set to '$config_keep_months'."
      else
       echo "  ERROR! '$var' value in config file is out of range (1-12)!"
       notify "UNKNOWN" "ERROR" "'${var}' value in '${config_file}' configuration file is out of range (1-12)!"
@@ -304,7 +300,7 @@ function load_config() {
     years)
      if (( "$val" >= 1 )); then
       config_keep_years="$val"
-      if $verbose; then echo "  '$var' set to '$config_keep_years'."; fi
+      $verbose && echo "  '$var' set to '$config_keep_years'."
      else
       echo "  ERROR! '$var' value in config file is out of range (1+)!"
       notify "UNKNOWN" "ERROR" "'${var}' value in '${config_file}' configuration file is out of range (1+)!"
@@ -314,7 +310,7 @@ function load_config() {
     datestamp)
       if [[ "$val" =~ ^[YmdHMS%.-]+$ ]]; then
        config_date_format="$val"
-       if $verbose; then echo "  '$var' set to '$config_date_format'."; fi
+       $verbose && echo "  '$var' set to '$config_date_format'."
       else
        echo "  ERROR! '$var' value in config file is out of range!"
        notify "UNKNOWN" "ERROR" "'${var}' value in '${config_file}' configuration file is out of range!"
@@ -327,9 +323,9 @@ function load_config() {
    esac
   done < "$config_file"
 
-  if $verbose; then echo '  Done.'; fi
+  $verbose && echo '  Done.'
  else
-  if $verbose; then echo "ERROR! Config file '${config_file}' does not exist!"; fi
+  $verbose && echo "ERROR! Config file '${config_file}' does not exist!"
   notify "UNKNOWN" "ERROR" "The '${config_file}' does not exist!"
   success=false
  fi
@@ -472,15 +468,15 @@ function init_repository() {
 		notify "UNKNOWN" "ERROR" "Cannot initialize repository with empty path!"
 		success=false
 	elif $success; then
-		if $verbose; then echo -n "Repository directory '$repo' "; fi
+		$verbose && echo -n "Repository directory '$repo' "
 		if does_repository_exist "$repo"; then
-			if $verbose; then echo 'exists.'; fi
+			$verbose && echo 'exists.'
 		else
-			if $verbose ; then echo -n 'does not exist. Creating... '; fi
+			$verbose && echo -n 'does not exist. Creating... '
 			if $dry_run || mkdir -p "$repo"; then
-				if $verbose; then echo 'Done.'; fi
+				$verbose && echo 'Done.'
 			else
-				if $verbose; then echo 'Error!'; fi
+				$verbose && echo 'Error!'
 				notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${repo}' repository directory!"
 				success=false
 			fi
@@ -490,26 +486,16 @@ function init_repository() {
 	# check for year subdirectory & create if necessary
 	if $success; then
 		year_dir="$repo/$year"
-		if $verbose ; then
-			printf "Year Directory '%s' " "$year_dir"
-		fi
+		$verbose && printf "Year Directory '%s' " "$year_dir"
 		if [ -d "$year_dir" ] ; then
-			if $verbose ; then
-				printf "exists.\n"
-			fi
+			$verbose && printf "exists.\n"
 		else
-			if $verbose; then
-				printf "does not exist. Creating... "
-			fi
+			$verbose && printf "does not exist. Creating... "
 			if $dry_run || mkdir "$year_dir" ; then
-				if $verbose ; then
-					printf "Done.\n"
-				fi
+				$verbose && printf "Done.\n"
 			else
-				if $verbose ; then
-					printf "ERROR!\n"
-					notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${year_dir}' year directory!"
-				fi
+				$verbose && printf "ERROR!\n"
+				notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${year_dir}' year directory!"
 				success=false
 			fi
 		fi
@@ -522,16 +508,16 @@ function init_repository() {
 			local month_dir
 			# check for month directory
 			printf -v month_dir "%s/%s/m%02d" "$repo" "$year" "$(( 10#$month ))"
-			if $verbose; then echo -n "Month Directory ${month_dir} "; fi
+			$verbose && echo -n "Month Directory ${month_dir} "
 			if [ -d "$month_dir" ]; then
-				if $verbose; then echo "exists."; fi
+				$verbose && echo "exists."
 			else
 				# create the month directory
-				if $verbose; then echo -n "does not exist. Creating... "; fi
+				$verbose && echo -n "does not exist. Creating... "
 				if $dry_run || mkdir "$month_dir"; then
-					if $verbose; then echo "Done."; fi
+					$verbose && echo "Done."
 				else
-					if $verbose; then echo "ERROR!"; fi
+					$verbose && echo "ERROR!"
 					notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${month_dir}' month directory!"
 					success=false
 				fi
@@ -546,16 +532,16 @@ function init_repository() {
 		      local day_dir
 		      # check for the day directory
 		      printf -v day_dir "%s/%s/d%02d" "$repo" "$year" "$(( 10#$day ))"
-		      if $verbose; then echo -n "Day Directory ${day_dir} "; fi
+		      $verbose && echo -n "Day Directory ${day_dir} "
 		      if [ -d "$day_dir" ]; then
-		      	if $verbose; then echo "exists."; fi
+		      	$verbose && echo "exists."
 		      else
 		      	# create the day directory
-		      	if $verbose; then echo -n "does not exist. Creating... "; fi
+		      	$verbose && echo -n "does not exist. Creating... "
 		      	if $dry_run || mkdir "$day_dir"; then
-		      		if $verbose; then echo "Done."; fi
+		      		$verbose && echo "Done."
 		      	else
-		      		if $verbose; then echo "ERROR!"; fi
+		      		$verbose && echo "ERROR!"
 		      		notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${day_dir}' day directory!"
 		      		success=false
 		      	fi
@@ -578,11 +564,11 @@ function init_repository_symlinks() {
 		local today
 		today="$d"
 		today_dir="${repo}/${y}/d${today}"
-		if $verbose; then echo -n "Creating symlink for 'today' pointing to '$today_dir'... "; fi
+		$verbose && echo -n "Creating symlink for 'today' pointing to '$today_dir'... "
 		if $dry_run || ln -f -n -s "$today_dir" "${repo}/today"; then
-			if $verbose; then echo 'Done.'; fi
+			$verbose && echo 'Done.'
 		else
-			if $verbose; then echo 'ERROR!'; fi
+			$verbose && echo 'ERROR!'
 			notify "$repo" "ERROR" "An unknown error occurred while attempting to create the 'today' symlink pointing at the '${today_dir}' directory!"
 			success=false
 		fi
@@ -594,11 +580,11 @@ function init_repository_symlinks() {
 		yesterday="$(relative_to_now -1d +%d)"
 		yesterday_year="$(relative_to_now -1d +%Y)"
 		yesterday_dir="${repo}/${yesterday_year}/d${yesterday}"
-		if $verbose; then echo -n "Creating symlink for 'yesterday' pointing to '$yesterday_dir'... "; fi
+		$verbose && echo -n "Creating symlink for 'yesterday' pointing to '$yesterday_dir'... "
 		if $dry_run || ln -f -n -s "$yesterday_dir" "${repo}/yesterday"; then
-			if $verbose; then echo 'Done.'; fi
+			$verbose && echo 'Done.'
 		else
-			if $verbose; then echo 'ERROR!'; fi
+			$verbose && echo 'ERROR!'
 			notify "$repo" "ERROR" "An unknown error occurred while attempting to create the 'yesterday' symlink pointing at the '${yesterday_dir}' directory!"
 			success=false
 		fi
@@ -614,17 +600,17 @@ function init_repository_symlinks() {
 			weekday_year="$(relative_to_now -${i}d +%Y)"
 			weekday_dir="${repo}/${weekday_year}/d${weekday}"
 			weekday_name="$(relative_to_now -${i}d +%A | tr '[:upper:]' '[:lower:]')"
-			if $verbose; then echo -n "Creating symlink for '$weekday_name' pointing to '$weekday_dir'... "; fi
+			$verbose && echo -n "Creating symlink for '$weekday_name' pointing to '$weekday_dir'... "
 			if $dry_run || ln -f -n -s "$weekday_dir" "${repo}/${weekday_name}"; then
-				if $verbose; then echo 'Done.'; fi
+				$verbose && echo 'Done.'
 			else
-				if $verbose; then echo 'ERROR!'; fi
+				$verbose && echo 'ERROR!'
 				notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${weekday_name}' symlink pointing at the '${weekday_dir}' directory!"
 				success=false
 			fi
 		done
 	else
-		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist or isn't initialized!"; fi
+		$verbose && echo "ERROR! Repository '${repo}' doesn't exist or isn't initialized!"
 		notify "$repo" "ERROR" "The '${repo}' repository doesn't exist or isn't initialized!"
 		success=false
 	fi
@@ -652,33 +638,33 @@ function roll_repository_daily_to_monthly() {
 		local mtime=''
 		printf -v src "%s/%d/d%02d" "$repo" "$year" "$(( 10#$day ))"
 		printf -v dst "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
-		if $verbose; then echo -n $'\n'"    Moving files & directories from '$src' to '$dst' ("; fi
+		$verbose && echo -n $'\n'"    Moving files & directories from '$src' to '$dst' ("
 		if $mtime_today; then
-			if $verbose; then echo -n "including"; fi
+			$verbose && echo -n "including"
 		else
-			if $verbose; then echo -n "excluding"; fi
+			$verbose && echo -n "excluding"
 			mtime='-mtime +0'
 		fi
-		if $verbose; then echo -n " those modified today)... "; fi
+		$verbose && echo -n " those modified today)... "
 
 		# step through all the matching (i.e. with or without a modification date of today) in the src dir and move them to dst
 		while IFS= read -r line; do
 			# don't bother processing an empty line or is the src directory itself
 			if [ -n "$line" ]; then
-				if $verbose; then echo -n $'\n'"      '$line'... "; fi
+				$verbose && echo -n $'\n'"      '$line'... "
 				if $dry_run || mv "$line" "$dst/"; then
-					if $verbose; then echo "Done."; fi
+					$verbose && echo "Done."
 				else
-				    if $verbose; then echo "ERROR!"; fi
+				    $verbose && echo "ERROR!"
 				    notify "$repo" "ERROR" "An unknown error occurred while attempting to move the '${line}' file/directory into the '${dst}' directory!"
 				    success=false
 				fi
 			fi
 		done <<< "$(find "$src" -mindepth 1 -maxdepth 1 $mtime| sort)"
 
-		if $verbose; then echo "Done."; fi
+		$verbose && echo "Done."
 	else
-		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
+		$verbose && echo "ERROR! Repository '${repo}' doesn't exist!"
 		notify "$repo" "ERROR" "The '${repo}' repository doesn't exist!"
 		success=false
 	fi
@@ -704,26 +690,26 @@ function roll_repository_monthly_to_monthly() {
 		local dst
 		printf -v src "%s/%d/m%02d" "$repo" "$year" "$src_month"
 		printf -v dst "%s/%d/m%02d" "$repo" "$year" "$dst_month"
-		if $verbose; then echo -n $'\n'"    Moving files & directories from '$src' to '$dst'... "; fi
+		$verbose && echo -n $'\n'"    Moving files & directories from '$src' to '$dst'... "
 
 		# step through all the files in the src dir and move them to dst
 		while IFS= read -r line; do
 			# don't bother processing an empty line
 			if [ -n "$line" ]; then
-				if $verbose; then echo -n $'\n'"      '$line'... "; fi
+				$verbose && echo -n $'\n'"      '$line'... "
 				if $dry_run || mv "$line" "$dst/"; then
-					if $verbose; then echo "Done."; fi
+					$verbose && echo "Done."
 				else
-					if $verbose; then echo "ERROR!"; fi
+					$verbose && echo "ERROR!"
 					notify "$repo" "ERROR" "An unknown error occurred while attempting to move the '${line}' file/directory into the '${dst}' directory!"
 					success=false
 				fi
 			fi
 		done <<< "$(find "$src" -mindepth 1 -maxdepth 1 | sort)"
 
-		if $verbose; then echo "Done."; fi
+		$verbose && echo "Done."
 	else
-		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
+		$verbose && echo "ERROR! Repository '${repo}' doesn't exist!"
 		notify "$repo" "ERROR" "The '${repo}' repository doesn't exist!"
 		success=false
 	fi
@@ -748,35 +734,35 @@ function consolidate_repository_monthly() {
 			if [[ ( -n "$line" ) && ( "$line" != "$dir" ) ]]; then
 				# if we don't have another file to compare against, we can't do anything
 				if [ -n "$last_file" ]; then
-					if $verbose; then echo -n $'\n'"  Comparing '$last_file' with '$line'... "; fi
+					$verbose && echo -n $'\n'"  Comparing '$last_file' with '$line'... "
 					compare_date_stamped_filenames "$last_file" "$line"
 					local match=$?
 					# don't do anthing if the filenames don't match
 					if [ $match -eq 0 ]; then
-						if $verbose; then echo "NO MATCH!"; fi
+						$verbose && echo "NO MATCH!"
 					# if the first file has a newer date stamp, then keep it and remove the second
 					elif [ $match -eq 1 ]; then
-						if $verbose; then echo -n "Keeping the former... "; fi
+						$verbose && echo -n "Keeping the former... "
 						if $dry_run || rm -r "$line"; then
-							if $verbose; then echo "Done."; fi
+							$verbose && echo "Done."
 						else
-						    if $verbose; then echo "ERROR!"; fi
+						    $verbose && echo "ERROR!"
 						    notify "$repo" "ERROR" "An unknown error occurred while attempting to delete the '${line}' file/directory during consolidation of files in the '${dir}' directory!"
 						    success=false
 						fi
 					# if the second file has a newer date stamp, then keep it and remove the first
 					elif [ $match -eq 2 ]; then
-						if $verbose; then echo -n "Keeping the latter... "; fi
+						$verbose && echo -n "Keeping the latter... "
 						if $dry_run || rm -r "$last_file"; then
-							if $verbose; then echo "Done."; fi
+							$verbose && echo "Done."
 						else
-						    if $verbose; then echo "ERROR!"; fi
+						    $verbose && echo "ERROR!"
 						    notify "$repo" "ERROR" "An unknown error occurred while attempting to delete the '${last_file}' file/directory during consolidation of files in the '${dir}' directory!"
 						    success=false
 						fi
 					fi
 
-					if $verbose; then echo -n "    Done."$'\n'"  "; fi
+					$verbose && echo -n "    Done."$'\n'"  "
 				fi
 
 				# store this filename to compare with the next one
@@ -784,7 +770,7 @@ function consolidate_repository_monthly() {
 			fi
 		done <<< "$(find "$dir" -mindepth 1 -maxdepth 1 | sort)"
 	else
-		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
+		$verbose && echo "ERROR! Repository '${repo}' doesn't exist!"
 		notify "$repo" "ERROR" "The '${repo}' repository doesn't exist!"
 		success=false
 	fi
@@ -797,7 +783,7 @@ function purge_year_directories() {
 	local repo="$1"
 
 	if does_repository_exist "$repo"; then
-		if $verbose; then echo; fi
+		$verbose && echo
 		# calculate keep-through year
 		local keep_through="$(relative_to_now -$(( ${config_keep_years} - 1 ))y +%Y)"
 
@@ -806,21 +792,21 @@ function purge_year_directories() {
 			local year="$(basename "$line")"
 			if [[ "$year" =~ ^[0-9]{4}$ ]] \
 				&& (( $year < $keep_through )); then
-				if $verbose; then echo -n "  Deleting $year directory... "; fi
+				$verbose && echo -n "  Deleting $year directory... "
 				if $dry_run || rm -r "${repo}/${year}"; then
-					if $verbose; then echo "Done."; fi
+					$verbose && echo "Done."
 				else
-					if $verbose; then echo "ERROR!"; fi
+					$verbose && echo "ERROR!"
 					notify "$repo" "ERROR" "An unknown error occurred while attempting to delete the '${repo}/${year}' year directory while purging old annual directories!"
 					success=false
 				fi
 			else
-				if $verbose; then echo "  Preserving $year directory."; fi
+				$verbose && echo "  Preserving $year directory."
 			fi
 		done <<< "$(Efind "$repo" '.*/[0-9]{4}' -mindepth 1 -maxdepth 1 | sort -nr)"
-		if $verbose; then echo -n "  "; fi
+		$verbose && echo -n "  "
 	else
-		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
+		$verbose && echo "ERROR! Repository '${repo}' doesn't exist!"
 		notify "$repo" "ERROR" "The '${repo}' repository doesn't exist!"
 		success=false
 	fi
@@ -842,7 +828,7 @@ function roll_repository_directories() {
 		else
 			keep_through="$(relative_to_now -$(( $config_keep_days - 1 ))d +%d)"
 		fi
-		if $verbose; then echo "Keeping files through 'd${keep_through}'."; fi
+		$verbose && echo "Keeping files through 'd${keep_through}'."
 
 		# step through the day subdirectories and "process" those that are outside the range to preserve (starting with yesterday)
 		local year="$(relative_to_now -1d +%Y)"
@@ -855,14 +841,14 @@ function roll_repository_directories() {
 			printf -v day_dir "%s/%d/d%02d" "$repo" "$year" "$(( 10#$day ))"
 			printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
 
-			if $verbose; then echo -n "Processing directory '$day_dir'... "; fi
+			$verbose && echo -n "Processing directory '$day_dir'... "
 			# are we keeping a range that doesn't wrap (i.e. today is greater than the day through which we're keeping)?
 			if (( \
 					( 10#$today >= 10#$keep_through ) \
 					&& ( 10#$day >= 10#$keep_through ) \
 					&& ( 10#$day <= 10#$today ) \
 				)); then
-				if $verbose; then echo 'Keeping.'; fi
+				$verbose && echo 'Keeping.'
 			# or, are we keeping a range that wraps (i.e. the day through which we're keeping is greater than today)?
 			elif (( \
 					( 10#$today <= 10#$keep_through ) \
@@ -871,14 +857,14 @@ function roll_repository_directories() {
 						|| ( 10#$day >= 10#$keep_through ) \
 					) \
 				)); then
-				if $verbose; then echo 'Keeping.'; fi
+				$verbose && echo 'Keeping.'
 			# only process if this is outside the range to keep
 			else
-				if $verbose; then echo -n $'\n''  Processing...'; fi
+				$verbose && echo -n $'\n''  Processing...'
 
 				# move the contents of the day's directory to the appropriate month's directory
 				if roll_repository_daily_to_monthly "$repo" "$year" "$day" "$month" true; then
-					if $verbose; then echo "  Done."; fi
+					$verbose && echo "  Done."
 				else
 					echo 'ERROR!'
 					echo "A fatal error occurred while attempting to move the contents of '$day_dir' to '$month_dir'!"
@@ -913,10 +899,10 @@ function roll_repository_directories() {
 		fi
 		printf -v day_dir "%s/%d/d%02d" "$repo" "$year" "$(( 10#$day ))"
 		printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
-		if $verbose; then echo -n "Processing directory '$day_dir'... "$'\n'"  Processing (special)... "; fi
+		$verbose && echo -n "Processing directory '$day_dir'... "$'\n'"  Processing (special)... "
 		# move the contents of the day's directory to the appropriate month's directory
 		if roll_repository_daily_to_monthly "$repo" "$year" "$day" "$month" false; then
-			if $verbose; then echo "  Done."; fi
+			$verbose && echo "  Done."
 		else
 			echo 'ERROR!'
 			echo "A fatal error occurred while attempting to move the contents of '$day_dir' to '$month_dir'!"
@@ -948,7 +934,7 @@ function roll_repository_directories() {
 				printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
 				printf -v keep_month_dir "%s/%d/m%02d" "$repo" "$keep_through_year" "$(( 10#$keep_through_month ))"
 
-				if $verbose; then echo -n "Processing directory '$month_dir'... "; fi
+				$verbose && echo -n "Processing directory '$month_dir'... "
 				# are we we in a month that should be kept?
 				if (( \
 						( $year > $keep_through_year ) \
@@ -957,14 +943,14 @@ function roll_repository_directories() {
 							&& (10#$month >= 10#$keep_through_month) \
 						) \
 					)); then
-					if $verbose; then echo 'Keeping.'; fi
+					$verbose && echo 'Keeping.'
 				# otherwise, if the month is in the keep through year, we should move it to the keep through month
 				elif (( $year == $keep_through_year )); then
-					if $verbose; then echo -n $'\n''  Processing...'; fi
+					$verbose && echo -n $'\n''  Processing...'
 
 					# move the contents of the month's directory to the appropriate keep_through month's directory
 					if roll_repository_monthly_to_monthly "$repo" "$year" "$(( 10#$month ))" "$(( 10#$keep_through_month ))"; then
-						if $verbose; then echo "  Done."; fi
+						$verbose && echo "  Done."
 					else
 						echo 'ERROR!'
 						echo "A fatal error occurred while attempting to move the contents of '$month_dir' to '$keep_month_dir'!"
@@ -974,7 +960,7 @@ function roll_repository_directories() {
 					fi
 				# if we've gone past the year to keep, then no need to continue
 				else
-					if $verbose; then echo 'Keeping.'; fi
+					$verbose && echo 'Keeping.'
 					break;
 				fi
 			done
@@ -986,11 +972,11 @@ function roll_repository_directories() {
 			year="$(basename "$year")"
 				for (( month=12; month > 0; month-- )); do
 					printf -v month_dir "%s/%d/m%02d" "$repo" "$year" "$(( 10#$month ))"
-					if $verbose; then echo -n "Consolidating files & directories in '$month_dir'... "; fi
+					$verbose && echo -n "Consolidating files & directories in '$month_dir'... "
 					if consolidate_repository_monthly "$repo" "$year" "$month"; then
-						if $verbose; then echo "Done."; fi
+						$verbose && echo "Done."
 					else
-						if $verbose; then echo "ERROR!"; fi
+						$verbose && echo "ERROR!"
 						notify "$repo" "ERROR" "An error occurred while consolidating files & directories in '${month_dir}'!"
 					fi
 				done
@@ -999,16 +985,16 @@ function roll_repository_directories() {
 
 		# finally, delete any year directories older than we're supposed to keep
 		if $success; then
-			if $verbose; then echo -n "Purging annual directories in '${repo}'... "; fi
+			$verbose && echo -n "Purging annual directories in '${repo}'... "
 			if purge_year_directories "$repo"; then
-				if $verbose; then echo "Done."; fi
+				$verbose && echo "Done."
 			else
-				if $verbose; then echo "ERROR!"; fi
+				$verbose && echo "ERROR!"
 				notify "$repo" "ERROR" "An error occurred while purging annual directories in '${repo}'!"
 			fi
 		fi
 	else
-		if $verbose; then echo "ERROR! Repository '${repo}' doesn't exist!"; fi
+		$verbose && echo "ERROR! Repository '${repo}' doesn't exist!"
 		notify "$repo" "ERROR" "The '${repo}' repository doesn't exist!"
 		success=false
 	fi
