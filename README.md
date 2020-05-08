@@ -110,7 +110,8 @@ v0.2   - Don't create repository symlinks in dry-run mode or if repo isn't
          is less than days to keep.  
 v0.2.1 - Fixed bug causing monthly archives to be incorrectly moved to current
          month directory.  
-v0.2.2 - Fixed errors in stats command.
+v0.2.2 - Fixed errors in stats command.  
+v0.2.  - Fixed potential function input validation issue.
 
 ACKNOWLEDGEMENTS
 ----------------
