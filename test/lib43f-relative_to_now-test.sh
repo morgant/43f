@@ -12,6 +12,10 @@ it_doesnt_error_with_a_valid_adjustment_string() {
   relative_to_now "+1d" "+%d"
 }
 
+it_errors_with_no_format_string() {
+  ! relative_to_now "+1d" ""
+}
+
 it_errors_without_a_leading_plus_symbol_on_format_string() {
   ! relative_to_now "+1d" "%d"
 }

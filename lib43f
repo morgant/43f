@@ -65,7 +65,7 @@ function relative_to_now() {
 	local out_format="$2"
 
 	# out_format string must start with a plus symbol
-	if [[ "$format" =~ ^[^+] ]]; then
+	if [[ (-z "$out_format") || ("$out_format" =~ ^[^+]) ]]; then
 		return 1
 	fi
 
@@ -591,8 +591,8 @@ function init_repository_symlinks() {
 		local yesterday_dir
 		local yesterday
 		local yesterday_year
-		yesterday=$(relative_to_now -1d +%d)
-		yesterday_year=$(relative_to_now -1d +%Y)
+		yesterday="$(relative_to_now -1d +%d)"
+		yesterday_year="$(relative_to_now -1d +%Y)"
 		yesterday_dir="${repo}/${yesterday_year}/d${yesterday}"
 		if $verbose; then echo -n "Creating symlink for 'yesterday' pointing to '$yesterday_dir'... "; fi
 		if $dry_run || ln -f -n -s "$yesterday_dir" "${repo}/yesterday"; then
@@ -610,10 +610,10 @@ function init_repository_symlinks() {
 		local weekday_year
 		local i
 		for (( i=1; i<=7; i++ )); do
-			weekday=$(relative_to_now -${i}d +%d)
-			weekday_year=$(relative_to_now -${i}d +%Y)
+			weekday="$(relative_to_now -${i}d +%d)"
+			weekday_year="$(relative_to_now -${i}d +%Y)"
 			weekday_dir="${repo}/${weekday_year}/d${weekday}"
-			weekday_name=$(relative_to_now -${i}d +%A | tr '[:upper:]' '[:lower:]')
+			weekday_name="$(relative_to_now -${i}d +%A | tr '[:upper:]' '[:lower:]')"
 			if $verbose; then echo -n "Creating symlink for '$weekday_name' pointing to '$weekday_dir'... "; fi
 			if $dry_run || ln -f -n -s "$weekday_dir" "${repo}/${weekday_name}"; then
 				if $verbose; then echo 'Done.'; fi
@@ -799,7 +799,7 @@ function purge_year_directories() {
 	if does_repository_exist "$repo"; then
 		if $verbose; then echo; fi
 		# calculate keep-through year
-		local keep_through=$(relative_to_now -$(( ${config_keep_years} - 1 ))y +%Y)
+		local keep_through="$(relative_to_now -$(( ${config_keep_years} - 1 ))y +%Y)"
 
 		# step through all the year directories that exist and delete any that are older than our "keep through" year
 		while IFS= read -r line; do
@@ -845,9 +845,9 @@ function roll_repository_directories() {
 		if $verbose; then echo "Keeping files through 'd${keep_through}'."; fi
 
 		# step through the day subdirectories and "process" those that are outside the range to preserve (starting with yesterday)
-		local year=$(relative_to_now -1d +%Y)
-		local month=$(relative_to_now -1d +%m)
-		local day=$(relative_to_now -1d +%d)
+		local year="$(relative_to_now -1d +%Y)"
+		local month="$(relative_to_now -1d +%m)"
+		local day="$(relative_to_now -1d +%d)"
 		local day_dir=''
 		local month_dir=''
 		while (( 10#$day != 10#$today )); do
