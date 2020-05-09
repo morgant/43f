@@ -60,7 +60,8 @@
 #                       Fixed bug causing monthly archives to be incorrectly moved
 #                       to current month directory.
 # v0.2.2 - 2020-04-19 - Fixed errors in stats command.
-# v0.2.  - 2020-05-   - Fixed potential function input validation issue.
+# v0.2.  - 2020-05-   - Fixed potential function input validation issue. Minor
+#                       refactor of verbose output.
 # 
 # LICENSE:
 # 
