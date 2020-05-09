@@ -23,7 +23,7 @@ install: 43f lib43f 43f.conf.default $(INSTALL_DEPS)
 	@echo
 	@echo "Next, run '43f init /path/to/43f/repository' to initialize repository"
 	@echo
-	@echo "Finally, add '$(PREFIX)/43f run' to the appropriate crontab, see INSTALLING.md"
+	@echo "Finally, add '$(PREFIX)/bin/43f run' to the appropriate crontab, see INSTALLING.md"
 
 uninstall_launchd:
 	launchctl unload /Library/LaunchDaemons/com.makkintosshu.43f.plist
