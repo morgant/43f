@@ -50,6 +50,11 @@ Installation is currently a manual process, but fairly straightforward:
     And pasting in the following:
     
         0 0 * * * /usr/local/bin/43f run
+
+    Make sure that the `PATH` environment variable is also set in the crontab
+    and includes the path to Dateutils (usually `/usr/local/bin`), e.g.:
+
+        PATH=/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/local/sbin
     
 8. That should do it. You should now be able to start storing files and/or
     directories in the daily and/or monthly directories within your `43f` 
