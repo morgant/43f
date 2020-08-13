@@ -165,7 +165,7 @@ it_does_move_files_outside_months_to_keep_directories() {
   for (( i=$config_keep_months; i<12; i++ )); do
     year=$y
     if (( ( 10#$m - 10#$i ) > 0 )); then
-      printf -v month "%02i" $(( 10$m - 10#$i ))
+      printf -v month "%02i" $(( 10#$m - 10#$i ))
     else
       printf -v month "%02i" $(( 12 - ( 10#$i - 10#$m ) ))
       year=$(( $year -1 ))
@@ -188,7 +188,7 @@ it_does_move_files_outside_months_to_keep_directories() {
   for (( i=$config_keep_months; i<12; i++ )); do
     year=$y
     if (( ( 10#$m - 10#$i ) > 0 )); then
-      printf -v month "%02i" $(( 10$m - 10#$i ))
+      printf -v month "%02i" $(( 10#$m - 10#$i ))
     else
       printf -v month "%02i" $(( 12 - ( 10#$i - 10#$m ) ))
       year=$(( $year -1 ))
