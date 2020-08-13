@@ -17,3 +17,10 @@ it_returns_true_if_day_is_valid() {
     valid_day "$i"
   done
 }
+
+it_returns_true_if_day_is_valid_with_leading_zero() {
+  days="01 02 03 04 05 06 07 08 09"
+  for d in $days; do
+    valid_day "$d"
+  done
+}

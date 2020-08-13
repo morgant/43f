@@ -212,7 +212,7 @@ function convdatestr() {
 function valid_day() {
 	local success=false
 
-	if (( ( "$1" >= 1 ) && ( "$1" <= 31 ) )); then
+	if (( ( 10#$1 >= 1 ) && ( 10#$1 <= 31 ) )); then
 		success=true
 	fi
 
