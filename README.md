@@ -121,7 +121,8 @@ v0.2.1 - Fixed bug causing monthly archives to be incorrectly moved to current
          month directory.  
 v0.2.2 - Fixed errors in stats command.  
 v0.2.3 - Fixed potential function input validation issue. Minor refactor of
-         verbose output.
+         verbose output.  
+v0.2.  - Fixed error in validating months with leading zeros.
 
 ACKNOWLEDGEMENTS
 ----------------

@@ -223,7 +223,7 @@ function valid_day() {
 function valid_month() {
 	local success=false
 
-	if (( ( "$1" >= 1 ) && ( "$1" <= 12 ) )); then
+	if (( ( 10#$1 >= 1 ) && ( 10#$1 <= 12 ) )); then
 		success=true
 	fi
 

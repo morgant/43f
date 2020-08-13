@@ -17,3 +17,10 @@ it_returns_true_if_month_is_valid() {
     valid_month "$i"
   done
 }
+
+it_returns_true_if_month_is_valid_with_leading_zero() {
+  months="01 02 03 04 05 06 07 08 09"
+  for m in $months; do
+    valid_month "$m"
+  done
+}
