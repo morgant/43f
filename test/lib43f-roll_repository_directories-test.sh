@@ -168,30 +168,32 @@ it_does_move_files_outside_months_to_keep_directories() {
       printf -v month "%02i" $(( 10#$m - 10#$i ))
     else
       printf -v month "%02i" $(( 12 - ( 10#$i - 10#$m ) ))
-      year=$(( $year -1 ))
+      year=$(( $year - 1 ))
     fi
     touch "tmp/43f/${year}/m${month}/${month}_test_file"
   done
 
   roll_repository_directories "tmp/43f"
 
-  # determine which month directory files should have been moved to
-  if (( ( 10#$m - ( 10#$config_keep_months - 1 ) ) > 0 )); then
-    printf -v keep_month "%02i" $(( 10#$m - ( 10#$config_keep_months - 1 ) ))
-    keep_year=$y
-  else
-    printf -v keep_month "%02i" $(( 12 - ( 10#$config_keep_months - 1 - 10#$m ) ))
-    keep_year=$(( $y - 1 ))
-  fi
-
   # all files outside of "to keep" month directories should have been moved to approprieate month directory
   for (( i=$config_keep_months; i<12; i++ )); do
+    # determine which month directory files should have been moved to
+    if (( ( 10#$m - ( 10#$config_keep_months - 1 ) ) > 0 )); then
+      printf -v keep_month "%02i" $(( 10#$m - ( 10#$config_keep_months - 1 ) ))
+      keep_year=$y
+    else
+      printf -v keep_month "%02i" $(( 12 - ( 10#$config_keep_months - 1 - 10#$m ) ))
+      keep_year=$(( $y - 1 ))
+    fi
+
     year=$y
     if (( ( 10#$m - 10#$i ) > 0 )); then
       printf -v month "%02i" $(( 10#$m - 10#$i ))
     else
       printf -v month "%02i" $(( 12 - ( 10#$i - 10#$m ) ))
-      year=$(( $year -1 ))
+      year=$(( $year - 1 ))
+      keep_year=$(( $keep_year - 1 ))
+      keep_month=12
     fi
     ! test -e "tmp/43f/${year}/m${month}/${month}_test_file"
     test -e "tmp/43f/${keep_year}/m${keep_month}/${month}_test_file"
