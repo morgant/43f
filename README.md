@@ -123,7 +123,7 @@ v0.2.2 - Fixed errors in stats command.
 v0.2.3 - Fixed potential function input validation issue. Minor refactor of
          verbose output.  
 v0.2.4 - Fixed errors in validating days & months with leading zeros.  
-v      - Added command line & configuration file options for
+v0.3   - Added command line & configuration file options for
          specifying file mode for repository & subdirectories.
 
 ACKNOWLEDGEMENTS
@@ -149,7 +149,7 @@ these tests are disabled by default (look for `xit_` tests).
 LICENSE
 -------
 
-Copyright (c) 2009-2020, Morgan Aldridge. All rights reserved.
+Copyright (c) 2009-2022, Morgan Aldridge. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without 
 modification, are permitted provided that the following conditions are met:
