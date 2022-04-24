@@ -122,7 +122,9 @@ v0.2.1 - Fixed bug causing monthly archives to be incorrectly moved to current
 v0.2.2 - Fixed errors in stats command.  
 v0.2.3 - Fixed potential function input validation issue. Minor refactor of
          verbose output.  
-v0.2.4 - Fixed errors in validating days & months with leading zeros.
+v0.2.4 - Fixed errors in validating days & months with leading zeros.  
+v      - Added command line & configuration file options for
+         specifying file mode for repository & subdirectories.
 
 ACKNOWLEDGEMENTS
 ----------------
