@@ -64,6 +64,8 @@
 #                       refactor of verbose output.
 # v0.2.4 - 2020-10-13 - Fixed errors in validating days & months with leading
 #                       zeros.
+# v      - 2022-04-24 - Added command line & configuration file options for
+#                       specifying file mode for repository & subdirectories.
 # 
 # LICENSE:
 # 
@@ -99,6 +101,7 @@ copyright='Copyright (c) 2009-2020 Morgan Aldridge'
 verbose=false
 dry_run=false
 notifications=true
+mode=''
 config_file='/usr/local/etc/43f.conf'
 config_repository='/usr/local/var/db/43f'
 config_notify_email='root'
@@ -122,6 +125,7 @@ Options:
   -c, --config=file    : specify an alternate config file
                 DEFAULT: /usr/local/etc/43f.conf
   -t                   : check the config file and exit
+  -m, --mode           : file mode for new directories in repository
   -n, --dry-run        : don't actually move/delete any files
   -N, --no-notify      : disable email notifications
 
@@ -133,6 +137,8 @@ Commands:
 Config File Options:
   repository           : absolute path to archive repository
                 DEFAULT: /usr/local/var/db/43f
+  repository_mode      : file mode (octal) for repository & subdirectories
+                DEFAULT: mkdir default
   notify               : email address(es) to send notifications to
                 DEFAULT: root
   days                 : number of daily file sets to preserve (1-31)
@@ -762,6 +768,17 @@ if [ $# -gt 0 ]; then
 				"-N" | "--no-notify")
 					notifications=false
 					;;
+				# see if the user wants to use a certain file mode when creating directories
+				"-m" | "--mode")
+					((i++))
+					mode="${argv[$i]}"
+					if ! valid_mode "$mode"; then
+						echo "ERROR! '${mode}' is not a valid absolute (octal) file mode!"
+						echo 'Exiting.'
+						notify "UNKNOWN" "ERROR" "'${mode}' is not a valid absolute (octal) file mode!"
+						exit 1
+					fi
+					;;
 				# handle other options
 					
 				# unknown option
@@ -781,7 +798,7 @@ if [ $# -gt 0 ]; then
 					((i++))
 					repository_year="${argv[$i]}"
 					# check/create repository directories
-					if init_repository "$repository_dir" "$repository_year"; then
+					if init_repository "$repository_dir" "$repository_year" "$mode"; then
 					      $verbose && echo 'Repository directories found/created successfully.'
 					else
 					      echo "ERROR! An error occurred while checking or creating the repository directories in '${repository_dir}'!"
@@ -797,7 +814,7 @@ if [ $# -gt 0 ]; then
 						# init the new year, if necessary (we only do this on the 1st of the year)
 						if (( ( 10#$m == 1 ) && ( 10#$d == 1 ) )); then
 							$verbose && echo -n "Creating new '$y' year directory... "
-							if init_repository "$config_repository" "$y"; then
+							if init_repository "$config_repository" "$y" "$mode"; then
 								$verbose && echo "Done."
 							else
 								echo "ERROR! An error occurred while creating the new '$y' year directory in '${config_repository}'!"

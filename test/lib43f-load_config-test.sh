@@ -65,6 +65,42 @@ it_sets_config_repository_with_directory_repository_in_config_file() {
   test "$config_repository" = "tmp/43f"
 }
 
+# repository_mode
+
+it_errors_with_empty_repository_mode_in_config_file() {
+  echo "repository_mode=" > "tmp/43f-repository_mode.conf"
+  ! load_config "tmp/43f-repository_mode.conf"
+}
+
+it_errors_with_non_octal_repository_mode_in_config_file() {
+  echo "repository_mode=8989" > "tmp/43f-repository_mode.conf"
+  ! load_config "tmp/43f-repository_mode.conf"
+}
+
+it_errors_with_too_short_octal_repository_mode_in_config_file() {
+  echo "repository_mode=77" > "tmp/43f-repository_mode.conf"
+  ! load_config "tmp/43f-repository_mode.conf"
+}
+
+it_errors_with_too_long_octal_repository_mode_in_config_file() {
+  echo "repository_mode=12770" > "tmp/43f-repository_mode.conf"
+  ! load_config "tmp/43f-repository_mode.conf"
+}
+
+it_does_not_set_non_empty_mode_with_valid_octal_repository_mode_in_config_file() {
+  mode=777
+  echo "repository_mode=2770" > "tmp/43f-repository_mode.conf"
+  load_config "tmp/43f-repository_mode.conf"
+  test "$mode" = "777"
+}
+
+it_sets_empty_mode_with_valid_octal_repository_mode_in_config_file() {
+  echo "repository_mode=2770" > "tmp/43f-repository_mode.conf"
+  test -z "$mode"
+  load_config "tmp/43f-repository_mode.conf"
+  test "$mode" = "2770"
+}
+
 # notify
 
 it_errors_with_empty_notify_in_config_file() {

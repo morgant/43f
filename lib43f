@@ -241,6 +241,17 @@ function valid_year() {
 	$success
 }
 
+# validate a file mode
+function valid_mode() {
+  local success=false
+
+  if [[ "$1" =~ ^[0-7]{3,4}$ ]]; then
+    success=true
+  fi
+
+  $success
+}
+
 # load the config file
 function load_config() {
  local success
@@ -265,6 +276,20 @@ function load_config() {
       printf "  ERROR! '%s' value in config file is either invalid or not a directory! You may need to run '43f init' to initialize the repository.\n" "$var"
       notify "UNKNOWN" "ERROR" "'${var}' value in '${config_file} configuration file is either invalid or is not a directory! You may need to run '43f init' to initialize the repository."
       success=false
+     fi
+     ;;
+    repository_mode)
+     if valid_mode "$val"; then
+       if [ -n "$mode" ]; then
+         $verbose && echo "  '${var}' NOT set to '${val}' because it has been overridden by command line option ('${mode}')."
+       else
+         mode="$val"
+         $verbose && echo "  '${var}' set to '${mode}."
+       fi
+     else
+       printf "  ERROR! '%s' value in config file is not valid absolute (octal) file mode!\n" "$var"
+       notify "UNKNOWN" "ERROR" "'${var}' value in '${config_file}' configuration file is not a valid absolute (octal) file mode!"
+       success=false
      fi
      ;;
     notify)
@@ -451,6 +476,7 @@ function init_repository() {
 	local success=true
 	local repo="$1"
 	local year="$2"
+	local mode="$3"
 
 	# default to this year (if one wasn't specified)
 	if [ -z "$year" ]; then
@@ -459,6 +485,13 @@ function init_repository() {
 	elif [[ ! "$year" =~ ^[0-9]{4}$ ]]; then
 		echo "ERROR! Cannot initialize repository with invalid year '$year'!"
 		notify "UNKNOWN" "ERROR" "Cannot initialize repository with invalid year '$year'!"
+		success=false
+	fi
+
+	# validate the file mode
+	if [ -n "$mode" ] && ! valid_mode "$mode"; then
+		echo "ERROR! Cannot initialize repository with invalid absolute (octal) file mode '$mode'!"
+		notify "UNKNOWN" "ERROR" "Cannot initialize repository with invalid absolute (octal) file mode '$mode'!"
 		success=false
 	fi
 
@@ -472,13 +505,25 @@ function init_repository() {
 		if does_repository_exist "$repo"; then
 			$verbose && echo 'exists.'
 		else
-			$verbose && echo -n 'does not exist. Creating... '
-			if $dry_run || mkdir -p "$repo"; then
-				$verbose && echo 'Done.'
+			$verbose && echo -n 'does not exist. '
+			if [ -n "$mode" ]; then
+				$verbose && echo -n 'Creating with mode '$mode'... '
+				if $dry_run || mkdir -p -m "$mode" "$repo"; then
+					$verbose && echo 'Done.'
+				else
+					$verbose && echo 'Error!'
+					notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${repo}' repository directory!"
+					success=false
+				fi
 			else
-				$verbose && echo 'Error!'
-				notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${repo}' repository directory!"
-				success=false
+				$verbose && echo -n 'Creating... '
+				if $dry_run || mkdir -p "$repo"; then
+					$verbose && echo 'Done.'
+				else
+					$verbose && echo 'Error!'
+					notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${repo}' repository directory!"
+					success=false
+				fi
 			fi
 		fi
 	fi
@@ -490,13 +535,25 @@ function init_repository() {
 		if [ -d "$year_dir" ] ; then
 			$verbose && echo "exists."
 		else
-			$verbose && echo -n "does not exist. Creating... "
-			if $dry_run || mkdir "$year_dir" ; then
-				$verbose && echo "Done."
+			$verbose && echo -n "does not exist. "
+			if [ -n "$mode" ]; then
+				$verbose && echo -n "Creating with mode '$mode'... "
+				if $dry_run || mkdir -m "$mode" "$year_dir" ; then
+					$verbose && echo "Done."
+				else
+					$verbose && echo "ERROR!"
+					notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${year_dir}' year directory!"
+					success=false
+				fi
 			else
-				$verbose && echo "ERROR!"
-				notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${year_dir}' year directory!"
-				success=false
+				$verbose && echo -n "Creating... "
+				if $dry_run || mkdir "$year_dir" ; then
+					$verbose && echo "Done."
+				else
+					$verbose && echo "ERROR!"
+					notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${year_dir}' year directory!"
+					success=false
+				fi
 			fi
 		fi
 	fi
@@ -513,13 +570,25 @@ function init_repository() {
 				$verbose && echo "exists."
 			else
 				# create the month directory
-				$verbose && echo -n "does not exist. Creating... "
-				if $dry_run || mkdir "$month_dir"; then
-					$verbose && echo "Done."
+				$verbose && echo -n "does not exist. "
+				if [ -n "$mode" ]; then
+					$verbose && echo -n "Creating with mode '$mode'... "
+					if $dry_run || mkdir -m "$mode" "$month_dir"; then
+						$verbose && echo "Done."
+					else
+						$verbose && echo "ERROR!"
+						notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${month_dir}' month directory!"
+						success=false
+					fi
 				else
-					$verbose && echo "ERROR!"
-					notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${month_dir}' month directory!"
-					success=false
+					$verbose && echo -n "Creating... "
+					if $dry_run || mkdir "$month_dir"; then
+						$verbose && echo "Done."
+					else
+						$verbose && echo "ERROR!"
+						notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${month_dir}' month directory!"
+						success=false
+					fi
 				fi
 			fi
 		done
@@ -537,15 +606,27 @@ function init_repository() {
 		      	$verbose && echo "exists."
 		      else
 		      	# create the day directory
-		      	$verbose && echo -n "does not exist. Creating... "
-		      	if $dry_run || mkdir "$day_dir"; then
-		      		$verbose && echo "Done."
-		      	else
-		      		$verbose && echo "ERROR!"
-		      		notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${day_dir}' day directory!"
-		      		success=false
-		      	fi
-		      fi
+		      	$verbose && echo -n "does not exist. "
+						if [ -n "$mode" ]; then
+							$verbose && echo -n "Creating with mode '$mode'... "
+							if $dry_run || mkdir -m "$mode" "$day_dir"; then
+								$verbose && echo "Done."
+							else
+								$verbose && echo "ERROR!"
+								notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${day_dir}' day directory!"
+								success=false
+							fi
+						else
+							$verbose && echo -n "Creating... "
+							if $dry_run || mkdir "$day_dir"; then
+								$verbose && echo "Done."
+							else
+								$verbose && echo "ERROR!"
+								notify "$repo" "ERROR" "An unknown error occurred while attempting to create the '${day_dir}' day directory!"
+								success=false
+							fi
+						fi
+					fi
 		done
 	fi
 
