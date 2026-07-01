@@ -59,17 +59,24 @@
 # v0.2.1 - 2020-04-18 - Morgan Aldridge
 #                       Fixed bug causing monthly archives to be incorrectly moved
 #                       to current month directory.
-# v0.2.2 - 2020-04-19 - Fixed errors in stats command.
-# v0.2.3 - 2020-05-12 - Fixed potential function input validation issue. Minor
+# v0.2.2 - 2020-04-19 - Morgan Aldridge
+#                       Fixed errors in stats command.
+# v0.2.3 - 2020-05-12 - Morgan Aldridge
+#                       Fixed potential function input validation issue. Minor
 #                       refactor of verbose output.
-# v0.2.4 - 2020-10-13 - Fixed errors in validating days & months with leading
+# v0.2.4 - 2020-10-13 - Morgan Aldridge
+#                       Fixed errors in validating days & months with leading
 #                       zeros.
-# v0.3   - 2022-04-24 - Added command line & configuration file options for
+# v0.3   - 2022-04-24 - Morgan Aldridge
+#                       Added command line & configuration file options for
 #                       specifying file mode for repository & subdirectories.
+# v0.3.1 - 2026-07-01 - Morgan Aldridge
+#                       Silenced `du`/`df` errors for missing directories in
+#                       stats command.
 # 
 # LICENSE:
 # 
-# Copyright (c) 2009-2022, Morgan Aldridge. All rights reserved.
+# Copyright (c) 2009-2026, Morgan T. Aldridge. All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without 
 # modification, are permitted provided that the following conditions are met:
@@ -94,8 +101,8 @@
 
 # info
 tool=$(basename "$0")
-version='0.3'
-copyright='Copyright (c) 2009-2020 Morgan Aldridge'
+version='0.3.1'
+copyright='Copyright (c) 2009-2026 Morgan Aldridge'
 
 # global variables
 verbose=false
@@ -203,8 +210,8 @@ function kb_to_hr() {
 
 # calculate file/directory disk usage in kilobytes
 function du_kb() {
-	local usage=$(du -ks "$1" | cut -f 1)
-	if [ $? -eq 0 ]; then
+	local usage=$(du -ks "$1" 2>/dev/null | awk '{ print $1 }')
+	if [ -n "$usage" ]; then
 		printf "%.0f" "$usage"
 		true
 	else
@@ -214,8 +221,8 @@ function du_kb() {
 
 # calculate file/directory available disk space in kilobytes
 function df_kb() {
-	local free=$(df -k "$1" | tail -n 1 | awk '{ print $4 }')
-	if [ $? -eq 0 ]; then
+	local free=$(df -k "$1" 2>/dev/null | tail -n 1 | awk '{ print $4 }')
+	if [ -n "$free" ]; then
 		printf "%.0f" "$free"
 		true
 	else
@@ -244,10 +251,22 @@ function get_daily_usages() {
 			
 			# are we keeping a range that doesn't wrap (i.e. today is greater than the day through which we're keeping)?
 			# or, are we keeping a range that wraps (i.e. the day through which we're keeping is greater than today)?
-			if (( ( ( 10#$today >= 10#$keep_through ) && ( 10#$day >= 10#$keep_through ) && ( 10#$day <= 10#$today ) ) || ( ( 10#$today <= 10#$keep_through ) && ( ( 10#$day <= 10#$today ) || ( 10#$day >= 10#$keep_through ) ) ) )); then
+			if (( \
+				( \
+					( 10#$today >= 10#$keep_through ) \
+					&& ( 10#$day >= 10#$keep_through ) \
+					&& ( 10#$day <= 10#$today ) \
+				) || ( \
+					( 10#$today <= 10#$keep_through ) \
+					&& ( \
+						( 10#$day <= 10#$today ) \
+						|| ( 10#$day >= 10#$keep_through ) \
+					) \
+				) \
+			)) && [ -d "$day_dir" ]; then
 				# calculate the usage, add to total, increment the counter
 				local usage=$(du_kb "$day_dir")
-				if [ $? -eq 0 ]; then
+				if [ -n "$usage" ]; then
 					printf "%.0f" "$usage"
 				else
 					success=false
@@ -299,15 +318,22 @@ function get_monthly_usages() {
 			
 			# are we keeping a range that doesn't wrap (i.e. this month is greater than the month through which we're keeping)?
 			# or, are we keeping a range that wraps (i.e. the month through which we're keeping is greater than this month)?
-			if (( ( (10#$this_month >= 10#$keep_through) \
-				    && (10#$month >= 10#$keep_through) \
-				    && (10#$month <= 10#$this_month) ) \
-				  || ( (10#$this_month <= 10#$keep_through) \
-					   && ( (10#$month <= 10#$this_month) \
-						    || (10#$month >= 10#$keep_through))))); then
+			if (( \
+				( \
+					(10#$this_month >= 10#$keep_through) \
+					&& (10#$month >= 10#$keep_through) \
+					&& (10#$month <= 10#$this_month) \
+				) || ( \
+					(10#$this_month <= 10#$keep_through) \
+					&& ( \
+						(10#$month <= 10#$this_month) \
+						|| (10#$month >= 10#$keep_through) \
+					) \
+				) \
+			)) && [ -d "$month_dir" ]; then
 				# calculate the usage, add to total, increment the counter
 				local usage=$(du_kb "$month_dir")
-				if [ $? -eq 0 ]; then
+				if [ -n "$usage" ]; then
 					printf "%.0f" "$usage"
 				else
 					success=false
@@ -355,7 +381,7 @@ function get_annual_usages() {
 			# calculate the usage (if the year directory exists)
 			if [ -d "$year_dir" ]; then
 				local usage=$(du_kb "$year_dir")
-				if [ $? -eq 0 ]; then
+				if [ -n "$usage" ]; then
 					printf "%.0f\n" "$usage"
 				else
 					success=false
@@ -417,7 +443,7 @@ function calculate_repository_min_usage() {
 		if [ $? -ne 0 ]; then
 			success=false
 		else
-		local usage=0
+			local usage=0
 			while IFS= read -r usage; do
 				if [ -n "$usage" ]; then
 					if [ -z "$min_usage" ]; then
@@ -429,10 +455,10 @@ function calculate_repository_min_usage() {
 			done <<< "$usages"
 		fi
 	fi
-	
-	# output the minimum
+
+	# output the minimum (or zero, if none)
 	if $success; then
-		printf "%.0f" "$min_usage"
+		printf "%.0f" "${min_usage:-0}"
 	fi
 	
 	$success
@@ -458,13 +484,13 @@ function calculate_repository_median_usage() {
 			done <<< "$usages"
 		fi
 	fi
-	
-	# output the median
+
+	# output the median (or zero, if none)
 	if $success; then
 		local median=$(( ${#usages_list[@]} / 2 ))
 		IFS=$'\n' usages_list=($(sort -n <<<"${usages_list[*]}"))
 		median_usage="${usages_list[$median]}"
-		printf "%.0f" "$median_usage"
+		printf "%.0f" "${median_usage:-0}"
 	fi
 	
 	$success
@@ -494,10 +520,10 @@ function calculate_repository_max_usage() {
 			done <<< "$usages"
 		fi
 	fi
-	
-	# output the maximum
+
+	# output the maximum (or zero, if none)
 	if $success; then
-		printf "%.0f" "$max_usage"
+		printf "%.0f" "${max_usage:-0}"
 	fi
 	
 	$success
