@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_n/a_
+
+## [0.3.1] - 2026-07-03
+
 ### Added
 
 * Added this CHANGELOG file with detailed documentation for all prior releases
@@ -157,7 +161,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Initial Development
 
-[unreleased]: https://github.com/morgant/43f/compare/0.3...main
+[unreleased]: https://github.com/morgant/43f/compare/0.3.1...master
+[0.3.1]: https://github.com/morgant/43f/compare/0.3...0.3.1
 [0.3.0]: https://github.com/morgant/43f/compare/0.2.4...0.3
 [0.2.4]: https://github.com/morgant/43f/compare/0.2.3...0.2.4
 [0.2.3]: https://github.com/morgant/43f/compare/0.2.2...0.2.3
