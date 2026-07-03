@@ -13,9 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Split license out of [README.md](README.md) into stand-alone
-  [LICENSE](LICENSE) file
-* Minor README & LICENSE formatting tweaks
+* Split license out of [README.md](README.md) and into stand-alone
+    [LICENSE](LICENSE) file
+* Markdown formatting and text wrapping immprovents, plus other cleanup in
+    `README.md`, `LICENSE`, [INSTALLING.md](INSTALLING.md), and
+    [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ### Fixed
 
