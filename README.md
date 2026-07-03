@@ -79,48 +79,14 @@ Run `43f -h` or `43f --help` for further usage instructions.
 
 ## TO-DO
 
-    [ ] Add logging to `syslog` and/or a file
-    [ ] Switch from a config file to a hidden .43f directory and .43f/config
-        file within the repository (like many VCS/SCM implementations use)?
-    [ ] Smart advance notifications based on disk usage rates gleaned from
-        stats
+- [ ] Add logging to `syslog` and/or a file
+- [ ] Switch from a config file to a hidden .43f directory and .43f/config
+      file within the repository (like many VCS/SCM implementations use)?
+- [ ] Smart advance notifications based on disk usage rates gleaned from stats
 
 ## CHANGE LOG
 
-v0.1   - Initial release.  
-v0.1.1 - Added optional year parameter to `init` command. Fixed bug causing
-         old files to be moved to incorrect month folder on the 1st day of a
-         month. Files outside the number of months to keep are now rolled
-         properly. Fix in launchd.plist. Linux support.  
-v0.1.2 - Fixed bug causing fatal error when moving files to month folder when 
-         destination month was greater than or equal to 8 (August).  
-v0.1.3 - Fixed bug causing file consolidation to fail for files in an October 
-         month folder.  
-v0.1.4 - Fixed disk usage statistics calculation bugs.  
-v0.1.5 - Automatically create new year directory on 1st of year.  
-v0.1.6 - Fixed bug causing daily files to be moved to month folders in current
-         year instead of previous year when crossing year boundary within past
-         31 days. Fixed bug preventing files from being consolidated in
-         monthly folders from previous years.  
-v0.1.7 - Fixed bug in Linux date parsing which failed for the month of
-         October, causing issues similar to those fixed in v0.1.3.  
-v0.1.8 - Fixed bug causing convenience symlinks to not correctly link to 
-         previous year directories during the first week of January.  
-v0.1.9 - Cross platform compatibility updates, esp. for OpenBSD.  
-v0.1.10 - Fix for OpenBSD compatibility when consolidating files.  
-v0.2   - Don't create repository symlinks in dry-run mode or if repo isn't
-         initialized. Fix zero date offset calculations on OpenBSD. Support
-         long TLDs in `notify` lines in config file. Improved functions input
-         validation. Fix too few days' data kept if previous month's length
-         is less than days to keep.  
-v0.2.1 - Fixed bug causing monthly archives to be incorrectly moved to current
-         month directory.  
-v0.2.2 - Fixed errors in stats command.  
-v0.2.3 - Fixed potential function input validation issue. Minor refactor of
-         verbose output.  
-v0.2.4 - Fixed errors in validating days & months with leading zeros.  
-v0.3   - Added command line & configuration file options for
-         specifying file mode for repository & subdirectories.
+See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
 ## ACKNOWLEDGEMENTS
 
